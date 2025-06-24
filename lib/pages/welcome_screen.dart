@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sikap/utils/colors.dart';
+import 'package:sikap/pages/login_screen.dart';
+import 'package:sikap/pages/job_list_screen.dart';
 
 class WelcomePage extends StatelessWidget {
     const WelcomePage({super.key});    
@@ -50,14 +52,16 @@ class WelcomePage extends StatelessWidget {
                                 
                                 // Buttons section (lower part)
                                 Column(
-                                    children: [
-                                        // Explore button
+                                    children: [                                        // Explore button
                                         SizedBox(
                                             width: double.infinity,
                                             height: 50,
                                             child: ElevatedButton(
                                                 onPressed: () {
-                                                // TODO: Navigate to explore page
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(builder: (context) => const JobList()),
+                                                    );
                                                 },
                                                 style: ElevatedButton.styleFrom(
                                                     backgroundColor: Colors.white,
@@ -79,14 +83,16 @@ class WelcomePage extends StatelessWidget {
                                         ),
                                         
                                         const SizedBox(height: 16),
-                                        
-                                        // Sign In button
+                                          // Sign In button
                                         SizedBox(
                                             width: double.infinity,
                                             height: 50,
                                             child: ElevatedButton(
                                                 onPressed: () {
-                                                // TODO: Navigate to sign in page
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                                                    );
                                                 },
                                                 style: ElevatedButton.styleFrom(
                                                     backgroundColor: AppColors.secondary,

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sikap/utils/colors.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:sikap/widgets/navigation_helper.dart';
+import 'package:sikap/widgets/bottom_navbar.dart';
 
-class JobList extends StatelessWidget {
-  const JobList({super.key});
+class SavedJobs extends StatelessWidget {
+  const SavedJobs({super.key});
     
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,7 @@ class JobList extends StatelessWidget {
                     ),
                     const Expanded(
                       child: Text(
-                        'Job List',
+                        'Saved Jobs',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.black,
@@ -46,7 +46,7 @@ class JobList extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48),
+                    const SizedBox(width: 48), // Balance the back button
                   ],
                 ),
               ),
@@ -61,13 +61,13 @@ class JobList extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.work,
+                      Icons.bookmark,
                       size: 80,
                       color: AppColors.primary,
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'Job Listings',
+                      'Saved Jobs',
                       style: TextStyle(
                         fontSize: 24,
                         fontFamily: 'Inter',
@@ -82,8 +82,27 @@ class JobList extends StatelessWidget {
           ),
         ],
       ),
-      // Use Navigation Helper
-      bottomNavigationBar: NavigationHelper.createBottomNavBar(context, 1),
+      // Add the bottom navbar directly here
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 1, // Jobs tab is active (index 1)
+        onTap: (index) {
+          // Handle navigation to different pages
+          switch (index) {
+            case 0:
+              Navigator.pushReplacementNamed(context, '/home');
+              break;
+            case 1:
+              // Already on Jobs page
+              break;
+            case 2:
+              Navigator.pushReplacementNamed(context, '/saved');
+              break;
+            case 3:
+              Navigator.pushReplacementNamed(context, '/profile');
+              break;
+          }
+        },
+      ),
     );
   }
 }
