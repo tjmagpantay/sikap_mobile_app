@@ -8,5 +8,6 @@ class AppColors {
   static const Color borderGray = Color(0xFFD4D7E3);
   static const Color secondary = Color(0xFFF3AF0E);
   static const Color placeholderBlue = Color(0xFF8897AD);
+  static const Color secondaryBlue = Color(0xFF40577D);
   // Add more colors as needed
 }

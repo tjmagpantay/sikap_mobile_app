@@ -34,18 +34,6 @@ class SavedJobs extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Expanded(
-                      child: Text(
-                        'Saved Jobs',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: 'Inter',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                     const SizedBox(width: 48), // Balance the back button
                   ],
                 ),
@@ -67,12 +55,12 @@ class SavedJobs extends StatelessWidget {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'Saved Jobs',
+                      'No Saved Jobs Yet',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 16,
                         fontFamily: 'Inter',
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
