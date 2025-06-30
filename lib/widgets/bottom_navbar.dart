@@ -15,7 +15,7 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 110,
+      height: 80, // Reduced from 110 to 80
       decoration: BoxDecoration(
         color: AppColors.primary,
         boxShadow: [
@@ -42,14 +42,19 @@ class BottomNavBar extends StatelessWidget {
 
   Widget _buildNavItem(int index, String iconName, String label) {
     final bool isActive = currentIndex == index;
-    final String iconPath = isActive
-        ? 'assets/icons/$iconName-secondary.svg'
-        : 'assets/icons/$iconName.svg';
+    
+    // Fixed icon path logic to handle 'saved' correctly
+    String iconPath;
+    if (isActive) {
+      iconPath = 'assets/icons/$iconName-secondary.svg';
+    } else {
+      iconPath = 'assets/icons/$iconName.svg';
+    }
 
     return GestureDetector(
       onTap: () => onTap(index),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4), // Reduced padding
+        padding: const EdgeInsets.symmetric(vertical: 8), // Adjusted padding
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -61,6 +66,14 @@ class BottomNavBar extends StatelessWidget {
                 isActive ? AppColors.secondary : Colors.white,
                 BlendMode.srcIn,
               ),
+              // Add error handling
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  _getIconFallback(iconName),
+                  size: 24,
+                  color: isActive ? AppColors.secondary : Colors.white,
+                );
+              },
             ),
             const SizedBox(height: 4),
             Text(
@@ -76,5 +89,21 @@ class BottomNavBar extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Helper method for icon fallbacks
+  IconData _getIconFallback(String iconName) {
+    switch (iconName) {
+      case 'home':
+        return Icons.home;
+      case 'job':
+        return Icons.work;
+      case 'saved':
+        return Icons.bookmark;
+      case 'profile':
+        return Icons.person;
+      default:
+        return Icons.circle;
+    }
   }
 }

@@ -13,23 +13,23 @@ class WelcomePage extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            // Background image
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Image.asset(
-                'assets/images/welcome_bg.png',
-                fit: BoxFit.cover,
-                height: MediaQuery.of(context).size.height * 0.6, // Cover bottom 60%
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    color: Colors.grey[200],
-                  );
-                },
-              ),
-            ),
+            // // Background image
+            // Positioned(
+            //   bottom: 0,
+            //   left: 0,
+            //   right: 0,
+            //   child: Image.asset(
+            //     'assets/images/welcome_bg.png',
+            //     fit: BoxFit.cover,
+            //     height: MediaQuery.of(context).size.height * 0.6, // Cover bottom 60%
+            //     errorBuilder: (context, error, stackTrace) {
+            //       return Container(
+            //         height: MediaQuery.of(context).size.height * 0.6,
+            //         color: Colors.grey[200],
+            //       );
+            //     },
+            //   ),
+            // ),
             
             // Content
             Padding(
@@ -128,7 +128,7 @@ class WelcomePage extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: Color(0xFF3F3F3F),
                         height: 1.5,

@@ -3,9 +3,44 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sikap/utils/colors.dart';
 import 'package:sikap/widgets/navigation_helper.dart';
 import 'package:sikap/pages/job_detail_screen.dart';
+import 'package:sikap/services/api_service.dart';
 
-class JobList extends StatelessWidget {
+class JobList extends StatefulWidget {
   const JobList({super.key});
+
+  @override
+  State<JobList> createState() => _JobListState();
+}
+
+class _JobListState extends State<JobList> {
+  List<dynamic> _jobPosts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadJobPosts();
+  }
+
+  Future<void> _loadJobPosts() async {
+    try {
+      final result = await ApiService.getJobPosts();
+      if (result['success'] && result['data'] != null) {
+        setState(() {
+          _jobPosts = result['data'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,65 +58,44 @@ class JobList extends StatelessWidget {
             // Job Cards List
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final jobs = [
-                      {
-                        'companyName': 'Atlassian',
-                        'jobTitle': 'Product Designer',
-                        'location': 'Manila, Philippines',
-                        'jobTypes': ['Freelance', 'Full-time'],
-                        'isGradient': false,
-                      },
-                      {
-                        'companyName': 'Atlassian',
-                        'jobTitle': 'Product Designer',
-                        'location': 'Manila, Philippines',
-                        'jobTypes': ['Freelance', 'Full-time'],
-                        'isGradient': false,
-                      },
-                      {
-                        'companyName': 'Atlassian',
-                        'jobTitle': 'Product Designer',
-                        'location': 'Manila, Philippines',
-                        'jobTypes': ['Freelance', 'Full-time'],
-                        'isGradient': false,
-                      },
-                      {
-                        'companyName': 'Atlassian',
-                        'jobTitle': 'Product Designer',
-                        'location': 'Manila, Philippines',
-                        'jobTypes': ['Freelance', 'Full-time'],
-                        'isGradient': false,
-                      },
-                      {
-                        'companyName': 'Atlassian',
-                        'jobTitle': 'Product Designer',
-                        'location': 'Manila, Philippines',
-                        'jobTypes': ['Freelance', 'Full-time'],
-                        'isGradient': false,
-                      },
-                    ];
-
-                    if (index >= jobs.length) return null;
-
-                    final job = jobs[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildJobCard(
-                        context: context,
-                        companyName: job['companyName'] as String,
-                        jobTitle: job['jobTitle'] as String,
-                        location: job['location'] as String,
-                        jobTypes: job['jobTypes'] as List<String>,
-                        isGradient: job['isGradient'] as bool,
+              sliver: _isLoading
+                  ? SliverFillRemaining(
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
                       ),
-                    );
-                  },
-                  childCount: 5,
-                ),
-              ),
+                    )
+                  : _jobPosts.isEmpty
+                      ? SliverFillRemaining(
+                          child: Center(
+                            child: Text(
+                              'No job posts available',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 16,
+                                color: AppColors.textGray,
+                              ),
+                            ),
+                          ),
+                        )
+                      : SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              if (index >= _jobPosts.length) return null;
+
+                              final job = _jobPosts[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _buildJobCard(
+                                  context: context,
+                                  job: job,
+                                ),
+                              );
+                            },
+                            childCount: _jobPosts.length,
+                          ),
+                        ),
             ),
 
             // Bottom padding
@@ -97,11 +111,7 @@ class JobList extends StatelessWidget {
 
   Widget _buildJobCard({
     required BuildContext context,
-    required String companyName,
-    required String jobTitle,
-    required String location,
-    required List<String> jobTypes,
-    required bool isGradient,
+    required Map<String, dynamic> job,
   }) {
     return GestureDetector(
       onTap: () {
@@ -142,12 +152,12 @@ class JobList extends StatelessWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(4),
-                    color: const Color(0xFF0052CC), // Atlassian blue
+                    color: const Color(0xFF0052CC),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'A',
-                      style: TextStyle(
+                      (job['company']?['company_name'] ?? 'C')[0].toUpperCase(),
+                      style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -165,7 +175,7 @@ class JobList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        companyName,
+                        job['company']?['company_name'] ?? 'Company',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
@@ -173,9 +183,9 @@ class JobList extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Product Designer',
-                        style: TextStyle(
+                      Text(
+                        job['job_title'] ?? 'Job Title',
+                        style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -188,7 +198,7 @@ class JobList extends StatelessWidget {
 
                 // Bookmark Icon
                 Icon(
-                  Icons.bookmark,
+                   Icons.bookmark_border, //Icons.bookmark
                   color: AppColors.secondary,
                   size: 24,
                 ),
@@ -207,7 +217,7 @@ class JobList extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  location,
+                  job['location'] ?? 'Location',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -219,7 +229,7 @@ class JobList extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Job Types
+            // Job Type and Workplace
             Row(
               children: [
                 Container(
@@ -228,12 +238,12 @@ class JobList extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.borderGray,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    'Freelance',
-                    style: TextStyle(
+                  child: Text(
+                    job['job_type'] ?? 'Full-time',
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
                       color: AppColors.primary,
@@ -247,12 +257,12 @@ class JobList extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.borderGray,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    'Full-time',
-                    style: TextStyle(
+                  child: Text(
+                    job['workplace_option'] ?? 'On-site',
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
                       color: AppColors.primary,
@@ -346,3 +356,4 @@ class StickySearchDelegate extends SliverPersistentHeaderDelegate {
     return false;
   }
 }
+

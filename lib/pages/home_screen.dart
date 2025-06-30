@@ -2,9 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:sikap/utils/colors.dart';
 import 'package:sikap/widgets/navigation_helper.dart';
 import 'package:sikap/pages/job_list_screen.dart';
+import 'package:sikap/services/api_service.dart';
+import 'package:sikap/services/user_session.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<dynamic> _jobPosts = [];
+  bool _isLoading = true;
+  String _userName = 'User';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // Get user name from session
+    final userSession = UserSession.instance;
+    if (userSession.isLoggedIn) {
+      setState(() {
+        _userName = userSession.userName;
+      });
+    }
+
+    // Load job posts
+    try {
+      final result = await ApiService.getJobPosts();
+      if (result['success'] && result['data'] != null) {
+        setState(() {
+          _jobPosts = result['data'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning!';
+    } else if (hour < 17) {
+      return 'Good Afternoon!';
+    } else {
+      return 'Good Evening!';
+    }
+  }
     
   @override
   Widget build(BuildContext context) {
@@ -22,12 +79,12 @@ class HomePage extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hi Alex Albon
+                  // Hi Username
                   RichText(
-                    text: const TextSpan(
-                      style: TextStyle(fontFamily: 'Inter'),
+                    text: TextSpan(
+                      style: const TextStyle(fontFamily: 'Inter'),
                       children: [
-                        TextSpan(
+                        const TextSpan(
                           text: 'Hi, ',
                           style: TextStyle(
                             color: AppColors.secondary,
@@ -36,8 +93,8 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
                         TextSpan(
-                          text: 'Alex Albon',
-                          style: TextStyle(
+                          text: _userName,
+                          style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -49,10 +106,10 @@ class HomePage extends StatelessWidget {
                   
                   const SizedBox(height: 4),
                   
-                  // Good Morning
-                  const Text(
-                    'Good Morning!',
-                    style: TextStyle(
+                  // Dynamic Greeting
+                  Text(
+                    _getGreeting(),
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
                       color: AppColors.textGray,
@@ -115,7 +172,7 @@ class HomePage extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: Container(
-                        height: 120,
+                        height: 100,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -263,320 +320,33 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Job Card 1 - Gradient Background
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF4E8CC4),
-                      Color(0xFF0B4478),
-                      Color(0xFF092C4C),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(6),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header row with company info and bookmark
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Company Logo
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            color: const Color(0xFF0052CC), // Atlassian blue
-                          ),
-                          child: const Center(
+              // Dynamic Job Posts
+              _isLoading
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40.0),
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    )
+                  : _jobPosts.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40.0),
                             child: Text(
-                              'A',
+                              'No job posts available',
                               style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                fontSize: 16,
+                                color: AppColors.textGray,
                               ),
                             ),
                           ),
+                        )
+                      : Column(
+                          children: _jobPosts.take(2).map((job) => _buildJobCard(job)).toList(),
                         ),
-
-                        const SizedBox(width: 12),
-
-                        // Company Name and Job Title
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Atlassian',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Product Designer',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Bookmark Icon
-                        Icon(
-                          Icons.bookmark,
-                          color: AppColors.secondary,
-                          size: 24,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Location
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          color: Colors.white70,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'Manila, Philippines',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Job Types
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'Freelance',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'Full-time',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Job Card 2 - Light Background
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7FBFF),
-                  border: Border.all(color: Colors.grey[200]!),
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header row with company info and bookmark
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Company Logo
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            color: const Color(0xFF0052CC), // Atlassian blue
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'A',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 12),
-
-                        // Company Name and Job Title
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Atlassian',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14,
-                                  color: AppColors.placeholderBlue,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Product Designer',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Bookmark Icon
-                        Icon(
-                          Icons.bookmark,
-                          color: AppColors.secondary,
-                          size: 24,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Location
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          color: AppColors.placeholderBlue,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Manila, Philippines',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            color: AppColors.placeholderBlue,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Job Types
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'Freelance',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'Full-time',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
 
               // Bottom spacing for navigation bar
               const SizedBox(height: 100),
@@ -585,6 +355,170 @@ class HomePage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: NavigationHelper.createBottomNavBar(context, 0), // Home tab active
+    );
+  }
+
+  Widget _buildJobCard(Map<String, dynamic> job) {
+    final isFirstCard = _jobPosts.indexOf(job) == 0;
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: isFirstCard ? const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF4E8CC4),
+            Color(0xFF0B4478),
+            Color(0xFF092C4C),
+          ],
+        ) : null,
+        color: isFirstCard ? null : const Color(0xFFF7FBFF),
+        border: isFirstCard ? null : Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(6),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row with company info and bookmark
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Company Logo
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: const Color(0xFF0052CC),
+                ),
+                child: Center(
+                  child: Text(
+                    (job['company']?['company_name'] ?? 'C')[0].toUpperCase(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Company Name and Job Title
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      job['company']?['company_name'] ?? 'Company',
+                      style: TextStyle(
+                        color: isFirstCard ? Colors.white70 : AppColors.textGray,
+                        fontSize: 14,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      job['job_title'] ?? 'Job Title',
+                      style: TextStyle(
+                        color: isFirstCard ? Colors.white : Colors.black87,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Bookmark Icon
+              Icon(
+                Icons.bookmark_border,
+                color: isFirstCard ? AppColors.secondary : AppColors.textGray,
+                size: 24,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Location
+          Row(
+            children: [
+              Icon(
+                Icons.location_on_outlined,
+                color: isFirstCard ? Colors.white70 : AppColors.textGray,
+                size: 18,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                job['location'] ?? 'Location',
+                style: TextStyle(
+                  color: isFirstCard ? Colors.white70 : AppColors.textGray,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Job Type and Workplace
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isFirstCard ? Colors.white.withOpacity(0.2) : AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  job['job_type'] ?? 'Full-time',
+                  style: TextStyle(
+                    color: isFirstCard ? Colors.white : AppColors.primary,
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isFirstCard ? Colors.white.withOpacity(0.2) : AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  job['workplace_option'] ?? 'On-site',
+                  style: TextStyle(
+                    color: isFirstCard ? Colors.white : AppColors.primary,
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

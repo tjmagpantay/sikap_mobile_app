@@ -17,7 +17,7 @@ class SavedJobs extends StatelessWidget {
             color: Colors.white,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
                 child: Row(
                   children: [
                     IconButton(
@@ -31,6 +31,18 @@ class SavedJobs extends StatelessWidget {
                         colorFilter: const ColorFilter.mode(
                           Colors.black,
                           BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Saved Jobs',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -72,7 +84,7 @@ class SavedJobs extends StatelessWidget {
       ),
       // Add the bottom navbar directly here
       bottomNavigationBar: BottomNavBar(
-        currentIndex: 1, // Jobs tab is active (index 1)
+        currentIndex: 2, // Changed from 1 to 2 (Saved tab is index 2)
         onTap: (index) {
           // Handle navigation to different pages
           switch (index) {
@@ -80,10 +92,10 @@ class SavedJobs extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/home');
               break;
             case 1:
-              // Already on Jobs page
+              Navigator.pushReplacementNamed(context, '/jobs');
               break;
             case 2:
-              Navigator.pushReplacementNamed(context, '/saved');
+              // Already on Saved page
               break;
             case 3:
               Navigator.pushReplacementNamed(context, '/profile');
