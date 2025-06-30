@@ -3,8 +3,10 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // Use 10.0.2.2 for Android emulator, localhost for iOS simulator
-  static const baseUrl =  'http://192.168.1.2/sikap_api/php'; //'http://10.0.2.2/sikap_api/php'
-  
+  // static const baseUrl = 'http://10.0.2.2/sikap_api/php';
+  static const baseUrl = 'http://192.168.1.2/sikap_api/php';
+
+
   // Authentication APIs
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
@@ -132,19 +134,32 @@ class ApiService {
     }
   }
 
-  // // Get all users (for testing)
-  // static Future<Map<String, dynamic>> getUsers() async {
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse('$baseUrl/get_users.php'),
-  //     );
+  // Get all users (for testing)
+  static Future<Map<String, dynamic>> getUsers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_users.php'),
+      );
       
-  //     return jsonDecode(response.body);
-  //   } catch (e) {
-  //     return {
-  //       'success': false,
-  //       'message': 'Network error: $e'
-  //     };
-  //   }
-  // }
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: $e'
+      };
+    }
+  }
+  // Method to get full image URL (this is correct)
+  static String getImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) return '';
+    
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith('http')) return imagePath;
+    
+    // Now points to your sikap_api project (which has the uploads folder)
+    return 'http://192.168.1.2/sikap_api/$imagePath';
+  }
 }
+
+
+
