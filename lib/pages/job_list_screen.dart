@@ -4,6 +4,7 @@ import 'package:sikap/utils/colors.dart';
 import 'package:sikap/widgets/navigation_helper.dart';
 import 'package:sikap/pages/job_detail_screen.dart';
 import 'package:sikap/services/api_service.dart';
+import 'package:sikap/services/user_session.dart'; // ADD THIS MISSING IMPORT
 
 class JobList extends StatefulWidget {
   const JobList({super.key});
@@ -14,12 +15,43 @@ class JobList extends StatefulWidget {
 
 class _JobListState extends State<JobList> {
   List<dynamic> _jobPosts = [];
+  List<dynamic> _filteredJobPosts = []; // Add filtered list
   bool _isLoading = true;
+  TextEditingController _searchController = TextEditingController(); // Add controller
 
   @override
   void initState() {
     super.initState();
     _loadJobPosts();
+    _searchController.addListener(_onSearchChanged); // Add listener
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Add search function
+  void _onSearchChanged() {
+    _filterJobs(_searchController.text);
+  }
+
+  void _filterJobs(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredJobPosts = _jobPosts;
+      } else {
+        _filteredJobPosts = _jobPosts.where((job) {
+          final jobTitle = (job['job_title'] ?? '').toString().toLowerCase();
+          final companyName = (job['company']?['company_name'] ?? '').toString().toLowerCase();
+          final searchQuery = query.toLowerCase();
+          
+          return jobTitle.contains(searchQuery) || companyName.contains(searchQuery);
+        }).toList();
+      }
+    });
   }
 
   Future<void> _loadJobPosts() async {
@@ -28,6 +60,7 @@ class _JobListState extends State<JobList> {
       if (result['success'] && result['data'] != null) {
         setState(() {
           _jobPosts = result['data'];
+          _filteredJobPosts = _jobPosts; // Initialize filtered list
           _isLoading = false;
         });
       } else {
@@ -52,7 +85,9 @@ class _JobListState extends State<JobList> {
             // Sticky Search Bar
             SliverPersistentHeader(
               pinned: true,
-              delegate: StickySearchDelegate(),
+              delegate: StickySearchDelegate(
+                searchController: _searchController, // Pass controller
+              ),
             ),
 
             // Job Cards List
@@ -66,25 +101,51 @@ class _JobListState extends State<JobList> {
                         ),
                       ),
                     )
-                  : _jobPosts.isEmpty
+                  : _filteredJobPosts.isEmpty // Use filtered list
                       ? SliverFillRemaining(
                           child: Center(
-                            child: Text(
-                              'No job posts available',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 16,
-                                color: AppColors.textGray,
-                              ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _searchController.text.isEmpty 
+                                    ? 'No job posts available'
+                                    : 'No jobs found for "${_searchController.text}"',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 16,
+                                    color: AppColors.textGray,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                if (_searchController.text.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Try searching with different keywords',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 14,
+                                      color: Colors.grey[500],
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         )
                       : SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
-                              if (index >= _jobPosts.length) return null;
+                              if (index >= _filteredJobPosts.length) return null;
 
-                              final job = _jobPosts[index];
+                              final job = _filteredJobPosts[index]; // Use filtered list
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: _buildJobCard(
@@ -93,14 +154,14 @@ class _JobListState extends State<JobList> {
                                 ),
                               );
                             },
-                            childCount: _jobPosts.length,
+                            childCount: _filteredJobPosts.length, // Use filtered count
                           ),
                         ),
             ),
 
             // Bottom padding
             const SliverToBoxAdapter(
-              child: SizedBox(height: 100), // Extra space for bottom navbar
+              child: SizedBox(height: 100),
             ),
           ],
         ),
@@ -115,11 +176,11 @@ class _JobListState extends State<JobList> {
   }) {
     return GestureDetector(
       onTap: () {
-        // Navigate to job detail screen
+        // Navigate to job detail screen with job ID
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const JobDetailScreen(),
+            builder: (context) => JobDetailScreen(jobId: job['job_id']),
           ),
         );
       },
@@ -197,10 +258,33 @@ class _JobListState extends State<JobList> {
                 ),
 
                 // Bookmark Icon
-                Icon(
-                   Icons.bookmark_border, //Icons.bookmark
-                  color: AppColors.secondary,
-                  size: 24,
+                GestureDetector(
+                  onTap: () async {
+                    final userSession = UserSession.instance;
+                    final jobseekerId = userSession.jobseekerId;
+
+                    if (jobseekerId != null) {
+                      final result = await ApiService.saveJob(
+                          jobseekerId, job['job_id']);
+                      if (result['success']) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Job saved successfully!')),
+                        );
+                        // Optionally refresh the job list or update the icon
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text(result['message'] ?? 'Failed to save job')),
+                        );
+                      }
+                    }
+                  },
+                  child: Icon(
+                    Icons.bookmark_border, // This will become Icons.bookmark when saved
+                    size: 24,
+                    color: AppColors.secondary,
+                  ),
                 ),
               ],
             ),
@@ -278,8 +362,12 @@ class _JobListState extends State<JobList> {
   }
 }
 
-// Custom delegate for sticky search bar
+// Updated Custom delegate for sticky search bar
 class StickySearchDelegate extends SliverPersistentHeaderDelegate {
+  final TextEditingController searchController;
+
+  StickySearchDelegate({required this.searchController});
+
   @override
   double get minExtent => 100.0;
 
@@ -312,6 +400,7 @@ class StickySearchDelegate extends SliverPersistentHeaderDelegate {
           ],
         ),
         child: TextField(
+          controller: searchController, // Add controller
           textAlignVertical: TextAlignVertical.center,
           decoration: InputDecoration(
             hintText: 'Search job or company...',
@@ -339,6 +428,18 @@ class StickySearchDelegate extends SliverPersistentHeaderDelegate {
                 },
               ),
             ),
+            suffixIcon: searchController.text.isNotEmpty // Add clear button
+                ? IconButton(
+                    onPressed: () {
+                      searchController.clear();
+                    },
+                    icon: const Icon(
+                      Icons.clear,
+                      color: AppColors.placeholderBlue,
+                      size: 20,
+                    ),
+                  )
+                : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,

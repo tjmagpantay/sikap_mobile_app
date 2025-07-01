@@ -141,7 +141,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                 return Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: List.generate(4, (index) {
-                                        final delay = index * 0.2;
+                                        // Calculate which dot should be highlighted (yellow line position)
+                                        final currentPosition = (_dotsAnimationController.value * 4) % 4;
+                                        final isActive = (currentPosition >= index && currentPosition < index + 1);
+                                        
+                                        // Calculate animation value for smooth transitions
+                                        final delay = index * 0.15;
                                         final animationValue = Curves.easeInOut.transform(
                                             (((_dotsAnimationController.value - delay) % 1.0).clamp(0.0, 1.0))
                                         );
@@ -149,13 +154,13 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                         return Container(
                                             margin: const EdgeInsets.symmetric(horizontal: 4),
                                             child: AnimatedContainer(
-                                                duration: const Duration(milliseconds: 300),
-                                                width: index == 0 ? 24 : 8, // First dot is longer (orange)
+                                                duration: const Duration(milliseconds: 200),
+                                                width: isActive ? 24 : 8, // Active dot is longer (yellow line)
                                                 height: 8,
                                                 decoration: BoxDecoration(
-                                                    color: index == 0 
-                                                        ? AppColors.secondary.withOpacity(0.4 + (animationValue * 0.6))
-                                                        : Colors.white.withOpacity(0.4 + (animationValue * 0.6)),
+                                                    color: isActive 
+                                                        ? AppColors.secondary.withOpacity(0.8 + (animationValue * 0.2)) // Yellow line
+                                                        : Colors.white.withOpacity(0.3 + (animationValue * 0.3)), // White dots
                                                     borderRadius: BorderRadius.circular(4),
                                                 ),
                                             ),

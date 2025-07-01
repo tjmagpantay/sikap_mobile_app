@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sikap/utils/colors.dart';
 import 'package:sikap/widgets/navigation_helper.dart';
 import 'package:sikap/pages/job_list_screen.dart';
+import 'package:sikap/pages/job_detail_screen.dart'; // ADD THIS IMPORT
 import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 
@@ -301,9 +302,12 @@ class _HomePageState extends State<HomePage> {
                   ),
                   GestureDetector(
                     onTap: () {
+                      // Navigate to job list screen, NOT job detail
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const JobList()),
+                        MaterialPageRoute(
+                          builder: (context) => const JobList(), // CHANGE THIS - Remove jobId parameter
+                        ),
                       );
                     },
                     child: const Text(
@@ -361,163 +365,173 @@ class _HomePageState extends State<HomePage> {
   Widget _buildJobCard(Map<String, dynamic> job) {
     final isFirstCard = _jobPosts.indexOf(job) == 0;
     
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        gradient: isFirstCard ? const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF4E8CC4),
-            Color(0xFF0B4478),
-            Color(0xFF092C4C),
+    return GestureDetector( // ADD THIS WRAPPER
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => JobDetailScreen(jobId: job['job_id']),
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          gradient: isFirstCard ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF4E8CC4),
+              Color(0xFF0B4478),
+              Color(0xFF092C4C),
+            ],
+          ) : null,
+          color: isFirstCard ? null : const Color(0xFFF7FBFF),
+          border: isFirstCard ? null : Border.all(color: Colors.grey[200]!),
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
           ],
-        ) : null,
-        color: isFirstCard ? null : const Color(0xFFF7FBFF),
-        border: isFirstCard ? null : Border.all(color: Colors.grey[200]!),
-        borderRadius: BorderRadius.circular(6),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row with company info and bookmark
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Company Logo
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: const Color(0xFF0052CC),
-                ),
-                child: Center(
-                  child: Text(
-                    (job['company']?['company_name'] ?? 'C')[0].toUpperCase(),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row with company info and bookmark
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Company Logo
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: const Color(0xFF0052CC),
+                  ),
+                  child: Center(
+                    child: Text(
+                      (job['company']?['company_name'] ?? 'C')[0].toUpperCase(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
 
-              // Company Name and Job Title
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      job['company']?['company_name'] ?? 'Company',
-                      style: TextStyle(
-                        color: isFirstCard ? Colors.white70 : AppColors.textGray,
-                        fontSize: 14,
-                        fontFamily: 'Inter',
+                // Company Name and Job Title
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        job['company']?['company_name'] ?? 'Company',
+                        style: TextStyle(
+                          color: isFirstCard ? Colors.white70 : AppColors.textGray,
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      job['job_title'] ?? 'Job Title',
-                      style: TextStyle(
-                        color: isFirstCard ? Colors.white : Colors.black87,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Inter',
+                      const SizedBox(height: 4),
+                      Text(
+                        job['job_title'] ?? 'Job Title',
+                        style: TextStyle(
+                          color: isFirstCard ? Colors.white : Colors.black87,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Inter',
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              // Bookmark Icon
-              Icon(
-                Icons.bookmark_border,
-                color: isFirstCard ? AppColors.secondary : AppColors.textGray,
-                size: 24,
-              ),
-            ],
-          ),
+                // Bookmark Icon
+                Icon(
+                  Icons.bookmark_border,
+                  color: isFirstCard ? AppColors.secondary : AppColors.textGray,
+                  size: 24,
+                ),
+              ],
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          // Location
-          Row(
-            children: [
-              Icon(
-                Icons.location_on_outlined,
-                color: isFirstCard ? Colors.white70 : AppColors.textGray,
-                size: 18,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                job['location'] ?? 'Location',
-                style: TextStyle(
+            // Location
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
                   color: isFirstCard ? Colors.white70 : AppColors.textGray,
-                  fontFamily: 'Inter',
+                  size: 18,
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Job Type and Workplace
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: isFirstCard ? Colors.white.withOpacity(0.2) : AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  job['job_type'] ?? 'Full-time',
+                const SizedBox(width: 4),
+                Text(
+                  job['location'] ?? 'Location',
                   style: TextStyle(
-                    color: isFirstCard ? Colors.white : AppColors.primary,
-                    fontSize: 12,
+                    color: isFirstCard ? Colors.white70 : AppColors.textGray,
                     fontFamily: 'Inter',
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: isFirstCard ? Colors.white.withOpacity(0.2) : AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  job['workplace_option'] ?? 'On-site',
-                  style: TextStyle(
-                    color: isFirstCard ? Colors.white : AppColors.primary,
-                    fontSize: 12,
-                    fontFamily: 'Inter',
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Job Type and Workplace
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isFirstCard ? Colors.white.withOpacity(0.2) : AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    job['job_type'] ?? 'Full-time',
+                    style: TextStyle(
+                      color: isFirstCard ? Colors.white : AppColors.primary,
+                      fontSize: 12,
+                      fontFamily: 'Inter',
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isFirstCard ? Colors.white.withOpacity(0.2) : AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    job['workplace_option'] ?? 'On-site',
+                    style: TextStyle(
+                      color: isFirstCard ? Colors.white : AppColors.primary,
+                      fontSize: 12,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

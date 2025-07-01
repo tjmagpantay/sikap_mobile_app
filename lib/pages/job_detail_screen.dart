@@ -2,119 +2,216 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sikap/utils/colors.dart';
 import 'package:sikap/widgets/navigation_helper.dart';
+import 'package:sikap/services/api_service.dart';
+import 'package:sikap/services/user_session.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class JobDetailScreen extends StatefulWidget {
-  const JobDetailScreen({super.key});
+  final int jobId;
+
+  const JobDetailScreen({super.key, required this.jobId});
 
   @override
   State<JobDetailScreen> createState() => _JobDetailScreenState();
 }
 
-class _JobDetailScreenState extends State<JobDetailScreen> with TickerProviderStateMixin {
+class _JobDetailScreenState extends State<JobDetailScreen>
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  Map<String, dynamic>? _jobDetails;
+  List<dynamic> _documents = [];
+  bool _isLoading = true;
+  bool _isSaved = false;
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this); // Changed to 3 tabs
+    _loadJobDetails();
+    _loadJobDocuments();
+  }
+
+  Future<void> _loadJobDetails() async {
+    try {
+      final result = await ApiService.getJobDetails(widget.jobId);
+      if (result['success'] && result['data'] != null) {
+        setState(() {
+          _jobDetails = result['data'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = result['message'] ?? 'Failed to load job details';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Network error: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadJobDocuments() async {
+    try {
+      final result = await ApiService.getJobDocuments(widget.jobId);
+      if (result['success'] && result['data'] != null) {
+        setState(() {
+          _documents = result['data'];
+        });
+      }
+    } catch (e) {
+      print('Error loading documents: $e');
+    }
+  }
+
+  Future<void> _toggleSaveJob() async {
+    final userSession = UserSession.instance;
+    final jobseekerId = userSession.jobseekerId;
+
+    if (jobseekerId != null) {
+      final result = _isSaved
+          ? await ApiService.unsaveJob(jobseekerId, widget.jobId)
+          : await ApiService.saveJob(jobseekerId, widget.jobId);
+
+      if (result['success']) {
+        setState(() {
+          _isSaved = !_isSaved;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isSaved ? 'Job saved successfully!' : 'Job removed from saved!',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? 'Action failed')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    if (_errorMessage.isNotEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 80, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage,
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _errorMessage = '';
+                  });
+                  _loadJobDetails();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                ),
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // Header Image with overlay
+            // Header with job info
             Container(
-              height: 250,
+              height: 200,
               width: double.infinity,
               child: Stack(
                 children: [
-                  // Background Image
-                  Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    child: Image.asset(
-                      'assets/images/atlassian-company.avif',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: Icon(
-                              Icons.image,
-                              size: 50,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  
-                  // Dark overlay
+                  // Background with company logo or gradient
                   Container(
                     width: double.infinity,
                     height: double.infinity,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                         colors: [
-                          Colors.black.withOpacity(0.3),
-                          Colors.black.withOpacity(0.6),
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.8),
                         ],
                       ),
                     ),
                   ),
-                  
+
                   // Back button and bookmark
-                  Positioned(
-                    top: 16,
-                    left: 16,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: SvgPicture.asset(
-                            'assets/icons/back-svgrepo-com.svg',
-                            width: 28,
-                            height: 28,
-                            colorFilter: const ColorFilter.mode(
-                              Colors.black,
-                              BlendMode.srcIn,
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 24,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  
+
                   Positioned(
                     top: 16,
                     right: 16,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.bookmark_border,
-                        color: Colors.white,
-                        size: 20,
+                    child: GestureDetector(
+                      onTap: _toggleSaveJob,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                          color: AppColors.secondary,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),
-                  
+
                   // Company info at bottom
                   Positioned(
                     bottom: 20,
@@ -132,26 +229,29 @@ class _JobDetailScreenState extends State<JobDetailScreen> with TickerProviderSt
                           ),
                           child: Center(
                             child: Text(
-                              'A',
+                              (_jobDetails?['employer']?['company_name'] ??
+                                      'C')[0]
+                                  .toUpperCase(),
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0052CC),
+                                color: AppColors.primary,
                               ),
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(width: 16),
-                        
+
                         // Company name and job title
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Atlassian',
-                                style: TextStyle(
+                              Text(
+                                _jobDetails?['employer']?['company_name'] ??
+                                    'Company',
+                                style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 16,
                                   color: Colors.white,
@@ -159,9 +259,9 @@ class _JobDetailScreenState extends State<JobDetailScreen> with TickerProviderSt
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                'Aerodynamics Engineer',
-                                style: TextStyle(
+                              Text(
+                                _jobDetails?['job_title'] ?? 'Job Title',
+                                style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -177,10 +277,10 @@ class _JobDetailScreenState extends State<JobDetailScreen> with TickerProviderSt
                 ],
               ),
             ),
-            
+
             // Tab Bar
             Container(
-              color: const Color.fromARGB(255, 255, 255, 255),
+              color: Colors.white,
               child: TabBar(
                 controller: _tabController,
                 labelColor: AppColors.primary,
@@ -192,254 +292,256 @@ class _JobDetailScreenState extends State<JobDetailScreen> with TickerProviderSt
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
-                unselectedLabelStyle: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.normal,
-                ),
                 tabs: const [
-                  Tab(text: 'Job Description'),
+                  Tab(text: 'Description'),
                   Tab(text: 'Requirements'),
+                  Tab(text: 'Documents'),
                 ],
               ),
             ),
-            
+
             // Tab Content
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // Job Description Tab
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Aerodynamics Engineer',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 24),
-                        
-                        const Text(
-                          'About Us',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 12),
-                        
-                        Text(
-                          'Aerodynamics engineers, or aerodynamicists, study the impact of gases and the forces they creates. They design the shapes of vehicles, buildings or products that interact with the gas, usually to increase lift or downforce, reduce drag and improve cooling, and make sure these effects continue during operation.',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            height: 2,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 24),
-                        
-                        // Company info row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Company Name',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Product Designer',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Years',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    '4 Years',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        const Text(
-                          'Work Experience',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 16),
-                        
-                        // Work experience row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Job Title',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Programmer',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Years',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    '3 Years',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 16),
-                        
-                        Text(
-                          'Company/Organization Name',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Atlassian',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 32), // Reduced space since no bottom button
-                      ],
-                    ),
-                  ),
-                  
-                  // Requirements Tab
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Requirements',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 20),
-                        
-                        // Requirements list
-                        _buildRequirementItem('Bachelor\'s degree in Aerospace Engineering or related field'),
-                        _buildRequirementItem('3+ years of experience in aerodynamics'),
-                        _buildRequirementItem('Proficiency in CFD software (ANSYS Fluent, OpenFOAM)'),
-                        _buildRequirementItem('Knowledge of wind tunnel testing'),
-                        _buildRequirementItem('Strong analytical and problem-solving skills'),
-                        _buildRequirementItem('Experience with CAD software (SolidWorks, CATIA)'),
-                        
-                        const SizedBox(height: 32), // Reduced space since no bottom button
-                      ],
-                    ),
-                  ),
-                ],
+              child: Container(
+                color: Colors.white,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Job Description Tab
+                    _buildDescriptionTab(),
+
+                    // Requirements Tab
+                    _buildRequirementsTab(),
+
+                    // Documents Tab
+                    _buildDocumentsTab(),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
-      // REMOVED: bottomNavigationBar with Apply Now button
+    );
+  }
+
+  Widget _buildDescriptionTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Job basic info
+          _buildInfoRow('Location', _jobDetails?['location'] ?? 'N/A'),
+          _buildInfoRow('Job Type', _jobDetails?['job_type'] ?? 'N/A'),
+          _buildInfoRow('Workplace', _jobDetails?['workplace_option'] ?? 'N/A'),
+          if (_jobDetails?['show_pay'] == true &&
+              _jobDetails?['pay_range'] != null)
+            _buildInfoRow('Salary', _jobDetails!['pay_range']),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            'Job Summary',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            _jobDetails?['job_summary'] ?? 'No job summary available.',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              height: 1.6,
+              color: Colors.grey[600],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            'Full Description',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            _jobDetails?['full_description'] ??
+                'No detailed description available.',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              height: 1.6,
+              color: Colors.grey[600],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            'Company Information',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            _jobDetails?['business']?['business_desc'] ??
+                'No company description available.',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              height: 1.6,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRequirementsTab() {
+    final skills = _jobDetails?['required_skills'] as List<dynamic>? ?? [];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Required Skills',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          if (skills.isNotEmpty)
+            ...skills.map((skill) => _buildRequirementItem(skill.toString()))
+          else
+            Text(
+              'No specific skills listed for this position.',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            'Application Deadline',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            _formatDate(_jobDetails?['application_deadline']),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.secondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Job Documents',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          if (_documents.isNotEmpty)
+            ..._documents.map((doc) => _buildDocumentItem(doc))
+          else
+            Text(
+              'No documents available for this job post.',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                color: Colors.grey[500],
+              ),
+            ),
+          ),
+          const Text(': ', style: TextStyle(fontSize: 16)),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -463,7 +565,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> with TickerProviderSt
               requirement,
               style: TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 14,
+                fontSize: 16,
                 height: 1.5,
                 color: Colors.grey[600],
               ),
@@ -472,6 +574,71 @@ class _JobDetailScreenState extends State<JobDetailScreen> with TickerProviderSt
         ],
       ),
     );
+  }
+
+  Widget _buildDocumentItem(Map<String, dynamic> document) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GestureDetector(
+        onTap: () {
+          // Open document URL
+          final url = document['file_url'];
+          if (url != null) {
+            launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.description, color: AppColors.primary, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      document['file_name'] ?? 'Document',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    Text(
+                      '${document['file_type']} Document',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.open_in_new, color: Colors.grey[400], size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return 'No deadline specified';
+
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return dateString;
+    }
   }
 
   @override
