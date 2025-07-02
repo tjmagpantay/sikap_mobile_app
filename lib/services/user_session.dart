@@ -45,14 +45,6 @@ class UserSession {
     return null;
   }
   
-  // // Get employer ID (for employers only)
-  // int? get employerId {
-  //   if (_userData?['role'] == 'employer' && _userData?['profile'] != null) {
-  //     return _userData!['profile']['employer_id'];
-  //   }
-  //   return null;
-  // }
-  
   // Clear user data (logout)
   void clearUserData() {
     _userData = null;

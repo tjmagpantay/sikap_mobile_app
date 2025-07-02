@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // Use 10.0.2.2 for Android emulator, localhost for iOS simulator
   // static const baseUrl = 'http://10.0.2.2/sikap_api/php';
-  static const baseUrl = 'http://192.168.1.2/sikap_api/php';
+  static const baseUrl = 'http://192.168.1.6/sikap_api/php';
 
 
   // Authentication APIs
@@ -27,26 +27,35 @@ class ApiService {
     }
   }
   
+  // Optional: Update to send JSON instead of form-data
   static Future<Map<String, dynamic>> register({
     required String email,
     required String password,
     required String firstName,
     required String lastName,
-    String role = 'jobseeker'
   }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/register.php'),
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
           'email': email,
           'password': password,
           'first_name': firstName,
           'last_name': lastName,
-          'role': role,
-        },
+        }),
       );
       
-      return jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          'success': false,
+          'message': 'Server error: ${response.statusCode}'
+        };
+      }
     } catch (e) {
       return {
         'success': false,
@@ -186,7 +195,7 @@ class ApiService {
       if (imagePath.startsWith('http')) return imagePath;
       
       // Now points to your sikap_api project (which has the uploads folder)
-      return 'http://192.168.1.2/sikap_api/$imagePath';
+      return 'http://192.168.1.6/sikap_api/$imagePath';
     }
 
     static Future<Map<String, dynamic>> getSavedJobs(int jobseekerId) async {
@@ -249,3 +258,5 @@ class ApiService {
       }
     }
 }
+
+
