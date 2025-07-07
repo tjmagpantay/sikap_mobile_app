@@ -6,6 +6,7 @@ import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 import 'package:sikap/pages/home_screen.dart';
 import 'package:sikap/pages/welcome_screen.dart'; // ADD THIS IMPORT
+import 'dart:convert';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -21,31 +22,51 @@ class _ProfileState extends State<Profile> {
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserProfile();
+    });
   }
 
   Future<void> _loadUserProfile() async {
     final userSession = UserSession.instance;
-    if (userSession.isLoggedIn && userSession.userId != null) {
+
+    if (userSession.isLoggedIn && userSession.userData != null) {
+      setState(() {
+        // Create a copy of session data with empty arrays
+        _userProfile = Map<String, dynamic>.from(userSession.userData!);
+        if (_userProfile!['profile'] != null) {
+          _userProfile!['profile'] = Map<String, dynamic>.from(
+            _userProfile!['profile'],
+          );
+          _userProfile!['profile']['education'] =
+              _userProfile!['profile']['education'] ?? [];
+          _userProfile!['profile']['skills'] =
+              _userProfile!['profile']['skills'] ?? [];
+          _userProfile!['profile']['work_experience'] =
+              _userProfile!['profile']['work_experience'] ?? [];
+        }
+        _isLoading = true;
+      });
+
       try {
         final result = await ApiService.getUserProfile(userSession.userId!);
-        if (result['success']) {
+
+        if (result['success'] == true) {
           setState(() {
             _userProfile = result['user'];
             _isLoading = false;
           });
-          print('Profile data loaded: $_userProfile'); // Debug print
         } else {
+          // Keep using session data
           setState(() {
             _isLoading = false;
           });
-          print('API error: ${result['message']}'); // Debug print
         }
       } catch (e) {
+        // Keep using session data
         setState(() {
           _isLoading = false;
         });
-        print('Network error: $e'); // Debug print
       }
     } else {
       setState(() {
@@ -61,7 +82,7 @@ class _ProfileState extends State<Profile> {
       final middleName = profile['middle_name'] ?? '';
       final lastName = profile['last_name'] ?? '';
       final suffix = profile['suffix'] ?? '';
-      
+
       String fullName = '$firstName';
       if (middleName.isNotEmpty && middleName != 'N/A') {
         fullName += ' $middleName';
@@ -70,7 +91,7 @@ class _ProfileState extends State<Profile> {
       if (suffix.isNotEmpty && suffix != 'N/A') {
         fullName += ' $suffix';
       }
-      
+
       return fullName.trim();
     }
     return 'No Name Available';
@@ -100,7 +121,7 @@ class _ProfileState extends State<Profile> {
         final birthDate = DateTime.parse(dob);
         final now = DateTime.now();
         int age = now.year - birthDate.year;
-        if (now.month < birthDate.month || 
+        if (now.month < birthDate.month ||
             (now.month == birthDate.month && now.day < birthDate.day)) {
           age--;
         }
@@ -123,23 +144,40 @@ class _ProfileState extends State<Profile> {
   double _getProfileCompletion() {
     final completion = _userProfile?['profile']?['profile_completion'];
     if (completion == 1) return 1.0;
-    
+
     // Calculate completion based on available data
     int filledFields = 0;
     int totalFields = 8;
-    
+
     final profile = _userProfile?['profile'];
     if (profile != null) {
-      if (profile['first_name'] != null && profile['first_name'].isNotEmpty && profile['first_name'] != 'N/A') filledFields++;
-      if (profile['last_name'] != null && profile['last_name'].isNotEmpty && profile['last_name'] != 'N/A') filledFields++;
-      if (profile['date_of_birth'] != null && profile['date_of_birth'].isNotEmpty) filledFields++;
+      if (profile['first_name'] != null &&
+          profile['first_name'].isNotEmpty &&
+          profile['first_name'] != 'N/A')
+        filledFields++;
+      if (profile['last_name'] != null &&
+          profile['last_name'].isNotEmpty &&
+          profile['last_name'] != 'N/A')
+        filledFields++;
+      if (profile['date_of_birth'] != null &&
+          profile['date_of_birth'].isNotEmpty)
+        filledFields++;
       if (profile['sex'] != null && profile['sex'].isNotEmpty) filledFields++;
-      if (profile['address'] != null && profile['address'].isNotEmpty && profile['address'] != 'N/A') filledFields++;
-      if (profile['contact_no'] != null && profile['contact_no'].isNotEmpty && profile['contact_no'] != 'N/A') filledFields++;
-      if (profile['profile_picture'] != null && profile['profile_picture'].isNotEmpty) filledFields++;
-      if (_userProfile?['email'] != null && _userProfile!['email'].isNotEmpty) filledFields++;
+      if (profile['address'] != null &&
+          profile['address'].isNotEmpty &&
+          profile['address'] != 'N/A')
+        filledFields++;
+      if (profile['contact_no'] != null &&
+          profile['contact_no'].isNotEmpty &&
+          profile['contact_no'] != 'N/A')
+        filledFields++;
+      if (profile['profile_picture'] != null &&
+          profile['profile_picture'].isNotEmpty)
+        filledFields++;
+      if (_userProfile?['email'] != null && _userProfile!['email'].isNotEmpty)
+        filledFields++;
     }
-    
+
     return filledFields / totalFields;
   }
 
@@ -177,7 +215,9 @@ class _ProfileState extends State<Profile> {
                           onTap: () {
                             Navigator.pushAndRemoveUntil(
                               context,
-                              MaterialPageRoute(builder: (context) => const HomePage()),
+                              MaterialPageRoute(
+                                builder: (context) => const HomePage(),
+                              ),
                               (route) => false,
                             );
                           },
@@ -256,7 +296,7 @@ class _ProfileState extends State<Profile> {
                           children: [
                             // Personal Information Card
                             _buildPersonalInfoCard(),
-                            
+
                             const SizedBox(height: 24),
 
                             // Profile Completion Card
@@ -322,7 +362,7 @@ class _ProfileState extends State<Profile> {
                     ],
                   ),
                 ),
-                
+
                 IgnorePointer(
                   child: Container(
                     height: 30,
@@ -444,9 +484,16 @@ class _ProfileState extends State<Profile> {
           ),
           const SizedBox(height: 16),
           _buildInfoRow('Age', _getAge()),
-          _buildInfoRow('Gender', _userProfile?['profile']?['sex']?.toString().toUpperCase() ?? 'Not specified'),
+          _buildInfoRow(
+            'Gender',
+            _userProfile?['profile']?['sex']?.toString().toUpperCase() ??
+                'Not specified',
+          ),
           _buildInfoRow('Address', _getAddress()),
-          _buildInfoRow('Date of Birth', _formatDate(_userProfile?['profile']?['date_of_birth'])),
+          _buildInfoRow(
+            'Date of Birth',
+            _formatDate(_userProfile?['profile']?['date_of_birth']),
+          ),
         ],
       ),
     );
@@ -455,7 +502,7 @@ class _ProfileState extends State<Profile> {
   Widget _buildProfileCompletionCard() {
     final completion = _getProfileCompletion();
     final percentage = (completion * 100).round();
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -485,7 +532,9 @@ class _ProfileState extends State<Profile> {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: completion >= 0.8 ? AppColors.primary : Colors.orange,
+                      color: completion >= 0.8
+                          ? AppColors.primary
+                          : Colors.orange,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -496,7 +545,9 @@ class _ProfileState extends State<Profile> {
                       fontFamily: 'Inter',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: completion >= 0.8 ? AppColors.primary : Colors.orange,
+                      color: completion >= 0.8
+                          ? AppColors.primary
+                          : Colors.orange,
                     ),
                   ),
                 ],
@@ -529,8 +580,16 @@ class _ProfileState extends State<Profile> {
   }
 
   Widget _buildEducationSection() {
-    final education = _userProfile?['profile']?['education'] as List<dynamic>? ?? [];
-    
+    final profileData = _userProfile?['profile'];
+    dynamic educationData = profileData?['education'];
+
+    List<dynamic> education = [];
+    if (educationData is List) {
+      education = educationData;
+    } else if (educationData != null) {
+      education = [educationData];
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -558,6 +617,7 @@ class _ProfileState extends State<Profile> {
             ],
           ),
           const SizedBox(height: 16),
+
           if (education.isEmpty)
             Text(
               'No education information added yet.',
@@ -568,7 +628,9 @@ class _ProfileState extends State<Profile> {
               ),
             )
           else
-            ...education.map((edu) => _buildEducationItem(edu)).toList(),
+            ...education.map((edu) {
+              return _buildEducationItem(Map<String, dynamic>.from(edu));
+            }).toList(),
         ],
       ),
     );
@@ -596,17 +658,37 @@ class _ProfileState extends State<Profile> {
             ),
           ),
           const SizedBox(height: 8),
-          _buildInfoRow('Duration', _formatEducationDuration(education['start_date'], education['end_date'])),
-          _buildInfoRow('Degree/Program', education['education_level'] ?? 'Not specified'),
-          _buildInfoRow('Field of Study', education['field_of_study'] ?? 'Not specified'),
+          _buildInfoRow(
+            'Duration',
+            _formatEducationDuration(
+              education['start_date'],
+              education['end_date'],
+            ),
+          ),
+          _buildInfoRow(
+            'Degree/Program',
+            education['education_level'] ?? 'Not specified',
+          ),
+          _buildInfoRow(
+            'Field of Study',
+            education['field_of_study'] ?? 'Not specified',
+          ),
         ],
       ),
     );
   }
 
   Widget _buildSkillsSection() {
-    final skills = _userProfile?['profile']?['skills'] as List<dynamic>? ?? [];
-    
+    final profileData = _userProfile?['profile'];
+    dynamic skillsData = profileData?['skills'];
+
+    List<dynamic> skills = [];
+    if (skillsData is List) {
+      skills = skillsData;
+    } else if (skillsData != null) {
+      skills = [skillsData];
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -634,6 +716,7 @@ class _ProfileState extends State<Profile> {
             ],
           ),
           const SizedBox(height: 16),
+
           if (skills.isEmpty)
             Text(
               'No skills added yet.',
@@ -647,7 +730,9 @@ class _ProfileState extends State<Profile> {
             Wrap(
               spacing: 12,
               runSpacing: 12,
-              children: skills.map((skill) => _buildSkillChip(skill)).toList(),
+              children: skills.map((skill) {
+                return _buildSkillChip(Map<String, dynamic>.from(skill));
+              }).toList(),
             ),
         ],
       ),
@@ -689,8 +774,15 @@ class _ProfileState extends State<Profile> {
   }
 
   Widget _buildWorkExperienceSection() {
-    final experience = _userProfile?['profile']?['work_experience'] as List<dynamic>? ?? [];
-    
+    // Get work experience data
+    dynamic experienceData = _userProfile?['profile']?['work_experience'];
+
+    // Ensure it's a List
+    List<dynamic> experience = [];
+    if (experienceData is List) {
+      experience = experienceData;
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -718,6 +810,7 @@ class _ProfileState extends State<Profile> {
             ],
           ),
           const SizedBox(height: 16),
+
           if (experience.isEmpty)
             Text(
               'No work experience added yet.',
@@ -728,7 +821,9 @@ class _ProfileState extends State<Profile> {
               ),
             )
           else
-            ...experience.map((exp) => _buildExperienceItem(exp)).toList(),
+            ...experience.map((exp) {
+              return _buildExperienceItem(Map<String, dynamic>.from(exp));
+            }).toList(),
         ],
       ),
     );
@@ -737,13 +832,13 @@ class _ProfileState extends State<Profile> {
   Widget _buildExperienceItem(Map<String, dynamic> experience) {
     final jobTitle = experience['job_title'];
     final companyName = experience['company_name'];
-    
+
     // Skip if both are N/A or empty
     if ((jobTitle == null || jobTitle == 'N/A' || jobTitle.isEmpty) &&
         (companyName == null || companyName == 'N/A' || companyName.isEmpty)) {
       return const SizedBox.shrink();
     }
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -774,10 +869,18 @@ class _ProfileState extends State<Profile> {
             ),
           ),
           const SizedBox(height: 8),
-          _buildInfoRow('Duration', _formatWorkDuration(experience['start_date'], experience['end_date'], experience['currently_working'])),
+          _buildInfoRow(
+            'Duration',
+            _formatWorkDuration(
+              experience['start_date'],
+              experience['end_date'],
+              experience['currently_working'],
+            ),
+          ),
           if (experience['employment_type'] != null)
             _buildInfoRow('Type', experience['employment_type']),
-          if (experience['responsibilities'] != null && experience['responsibilities'] != 'N/A')
+          if (experience['responsibilities'] != null &&
+              experience['responsibilities'] != 'N/A')
             _buildInfoRow('Responsibilities', experience['responsibilities']),
         ],
       ),
@@ -798,7 +901,7 @@ class _ProfileState extends State<Profile> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Email Contact
         Row(
           children: [
@@ -928,7 +1031,7 @@ class _ProfileState extends State<Profile> {
 
   String _formatDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) return 'Not provided';
-    
+
     try {
       final date = DateTime.parse(dateString);
       return '${date.day}/${date.month}/${date.year}';
@@ -939,31 +1042,35 @@ class _ProfileState extends State<Profile> {
 
   String _formatEducationDuration(String? startDate, String? endDate) {
     if (startDate == null || startDate.isEmpty) return 'Not specified';
-    
+
     try {
       final start = DateTime.parse(startDate);
       String duration = '${start.year}';
-      
+
       if (endDate != null && endDate.isNotEmpty) {
         final end = DateTime.parse(endDate);
         duration += ' - ${end.year}';
       } else {
         duration += ' - Present';
       }
-      
+
       return duration;
     } catch (e) {
       return 'Not specified';
     }
   }
 
-  String _formatWorkDuration(String? startDate, String? endDate, dynamic currentlyWorking) {
+  String _formatWorkDuration(
+    String? startDate,
+    String? endDate,
+    dynamic currentlyWorking,
+  ) {
     if (startDate == null || startDate.isEmpty) return 'Not specified';
-    
+
     try {
       final start = DateTime.parse(startDate);
       String duration = '${start.month}/${start.year}';
-      
+
       if (currentlyWorking == 1 || currentlyWorking == true) {
         duration += ' - Present';
       } else if (endDate != null && endDate.isNotEmpty) {
@@ -972,7 +1079,7 @@ class _ProfileState extends State<Profile> {
       } else {
         duration += ' - Not specified';
       }
-      
+
       return duration;
     } catch (e) {
       return 'Not specified';
@@ -991,18 +1098,12 @@ class _ProfileState extends State<Profile> {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.logout,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.logout, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             const Text(
               'Sign Out',
@@ -1088,7 +1189,7 @@ class _ProfileState extends State<Profile> {
   void _signOut() {
     // Clear user session
     UserSession.instance.clearUserData();
-    
+
     // Navigate to welcome screen and clear all previous routes
     Navigator.pushAndRemoveUntil(
       context,

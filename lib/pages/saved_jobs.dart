@@ -34,7 +34,7 @@ class _SavedJobsState extends State<SavedJobs> {
     try {
       final userSession = UserSession.instance;
       final jobseekerId = userSession.jobseekerId;
-      
+
       if (jobseekerId == null) {
         setState(() {
           _isLoading = false;
@@ -44,7 +44,7 @@ class _SavedJobsState extends State<SavedJobs> {
       }
 
       final result = await ApiService.getSavedJobs(jobseekerId);
-      
+
       if (result['success'] && result['data'] != null) {
         setState(() {
           _savedJobs = result['data'];
@@ -75,39 +75,44 @@ class _SavedJobsState extends State<SavedJobs> {
             color: Colors.white,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6.0,
+                  vertical: 8.0,
+                ),
                 child: Row(
                   children: [
-                  IconButton(
-                    onPressed: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      } else {
-                        // If no previous page, go to home
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (context) => const HomePage()),
-                          (route) => false,
-                        );
-                      }
-                    },
-                    icon: SvgPicture.asset(
-                      'assets/icons/back-svgrepo-com.svg',
-                      width: 28,
-                      height: 28,
-                      colorFilter: const ColorFilter.mode(
-                        Colors.black,
-                        BlendMode.srcIn,
-                      ),
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.arrow_back,
-                          color: Colors.black,
-                          size: 28,
-                        );
+                    IconButton(
+                      onPressed: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else {
+                          // If no previous page, go to home
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomePage(),
+                            ),
+                            (route) => false,
+                          );
+                        }
                       },
+                      icon: SvgPicture.asset(
+                        'assets/icons/back-svgrepo-com.svg',
+                        width: 28,
+                        height: 28,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.black,
+                          BlendMode.srcIn,
+                        ),
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.arrow_back,
+                            color: Colors.black,
+                            size: 28,
+                          );
+                        },
+                      ),
                     ),
-                  ),
                     Expanded(
                       child: Text(
                         'Saved Jobs',
@@ -126,98 +131,98 @@ class _SavedJobsState extends State<SavedJobs> {
               ),
             ),
           ),
-          
+
           // Body content
           Expanded(
             child: _isLoading
                 ? Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                    ),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   )
                 : _errorMessage.isNotEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 80,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Inter',
-                                color: Colors.grey[600],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _loadSavedJobs,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Retry'),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 80,
+                          color: Colors.grey[400],
                         ),
-                      )
-                    : _savedJobs.isEmpty
-                        ? const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.bookmark_border,
-                                  size: 80,
-                                  color: AppColors.primary,
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'No Saved Jobs Yet',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Jobs you save will appear here',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontFamily: 'Inter',
-                                    color: AppColors.textGray,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: ListView.builder(
-                              itemCount: _savedJobs.length,
-                              itemBuilder: (context, index) {
-                                final savedJob = _savedJobs[index]; // This is now a saved job, not application
-                                final job = savedJob['job'];
-                                
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _buildSavedJobCard(
-                                    context: context,
-                                    savedJob: savedJob, // Change from 'application' to 'savedJob'
-                                    job: job,
-                                  ),
-                                );
-                              },
-                            ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _errorMessage,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Inter',
+                            color: Colors.grey[600],
                           ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadSavedJobs,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                : _savedJobs.isEmpty
+                ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.bookmark_border,
+                          size: 80,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'No Saved Jobs Yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Jobs you save will appear here',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                            color: AppColors.textGray,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ListView.builder(
+                      itemCount: _savedJobs.length,
+                      itemBuilder: (context, index) {
+                        final savedJob =
+                            _savedJobs[index]; // This is now a saved job, not application
+                        final job = savedJob['job'];
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildSavedJobCard(
+                            context: context,
+                            savedJob:
+                                savedJob, // Change from 'application' to 'savedJob'
+                            job: job,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -235,7 +240,8 @@ class _SavedJobsState extends State<SavedJobs> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => JobDetailScreen(jobId: job['job_id']), // ADD jobId parameter
+            builder: (context) =>
+                JobDetailScreen(jobId: job['job_id']), // ADD jobId parameter
           ),
         );
       },
@@ -322,12 +328,17 @@ class _SavedJobsState extends State<SavedJobs> {
                         // Unsave the job
                         final userSession = UserSession.instance;
                         final jobseekerId = userSession.jobseekerId;
-                        
+
                         if (jobseekerId != null) {
-                          final result = await ApiService.unsaveJob(jobseekerId, job['job_id']);
+                          final result = await ApiService.unsaveJob(
+                            jobseekerId,
+                            job['job_id'],
+                          );
                           if (result['success']) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Job removed from saved!')),
+                              SnackBar(
+                                content: Text('Job removed from saved!'),
+                              ),
                             );
                             _loadSavedJobs(); // Refresh the list
                           }
@@ -356,7 +367,6 @@ class _SavedJobsState extends State<SavedJobs> {
             ), // Add this missing comma
 
             const SizedBox(height: 12), // Add this missing comma
-
             // Location
             Row(
               children: [
@@ -378,7 +388,6 @@ class _SavedJobsState extends State<SavedJobs> {
             ), // Add this missing comma
 
             const SizedBox(height: 8), // Add this missing comma
-
             // Saved date (replace applied date)
             Row(
               children: [
@@ -400,7 +409,6 @@ class _SavedJobsState extends State<SavedJobs> {
             ), // Add this missing comma
 
             const SizedBox(height: 12), // Add this missing comma
-
             // Job Type and Workplace
             Row(
               children: [
@@ -451,12 +459,12 @@ class _SavedJobsState extends State<SavedJobs> {
 
   String _formatDate(String? dateString) {
     if (dateString == null) return 'Unknown';
-    
+
     try {
       final date = DateTime.parse(dateString);
       final now = DateTime.now();
       final difference = now.difference(date);
-      
+
       if (difference.inDays == 0) {
         return 'today';
       } else if (difference.inDays == 1) {

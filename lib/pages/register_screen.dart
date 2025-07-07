@@ -8,7 +8,7 @@ import 'package:sikap/services/user_session.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
-  
+
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
@@ -19,18 +19,20 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   bool _agreedToTerms = false; // ADD THIS LINE
   bool _isScrolled = false; // ADD THIS LINE
-  
+
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  final ScrollController _scrollController = ScrollController(); // ADD CONTROLLER
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final ScrollController _scrollController =
+      ScrollController(); // ADD CONTROLLER
 
   @override
   void initState() {
     super.initState();
-    
+
     // ADD LISTENER TO DETECT SCROLLING
     _scrollController.addListener(() {
       setState(() {
@@ -53,11 +55,11 @@ class _RegisterPageState extends State<RegisterPage> {
   // ADD METHOD TO CHECK IF FORM IS VALID
   bool get _isFormValid {
     return _firstNameController.text.isNotEmpty &&
-           _lastNameController.text.isNotEmpty &&
-           _emailController.text.isNotEmpty &&
-           _passwordController.text.isNotEmpty &&
-           _confirmPasswordController.text.isNotEmpty &&
-           _agreedToTerms; // Terms must be agreed
+        _lastNameController.text.isNotEmpty &&
+        _emailController.text.isNotEmpty &&
+        _passwordController.text.isNotEmpty &&
+        _confirmPasswordController.text.isNotEmpty &&
+        _agreedToTerms; // Terms must be agreed
   }
 
   Future<void> _handleRegister() async {
@@ -65,7 +67,9 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please agree to the Terms and Conditions and Privacy Policy'),
+          content: Text(
+            'Please agree to the Terms and Conditions and Privacy Policy',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -73,9 +77,9 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     // Validate all fields are filled
-    if (_firstNameController.text.isEmpty || 
+    if (_firstNameController.text.isEmpty ||
         _lastNameController.text.isEmpty ||
-        _emailController.text.isEmpty || 
+        _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -88,7 +92,9 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     // Validate email format
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_emailController.text)) {
+    if (!RegExp(
+      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+    ).hasMatch(_emailController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid email address'),
@@ -137,9 +143,8 @@ class _RegisterPageState extends State<RegisterPage> {
       });
 
       if (result['success']) {
-        // Store user data in session
-        UserSession.instance.setUserData(result['user']);
-        
+        // Store user data in session (register method already does this in ApiService)
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -147,7 +152,7 @@ class _RegisterPageState extends State<RegisterPage> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Navigate to home screen
         Navigator.pushAndRemoveUntil(
           context,
@@ -166,12 +171,9 @@ class _RegisterPageState extends State<RegisterPage> {
       setState(() {
         _isLoading = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -183,9 +185,7 @@ class _RegisterPageState extends State<RegisterPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFFE7F0FA),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           title: const Text(
             'Terms and Conditions',
             style: TextStyle(
@@ -261,9 +261,7 @@ Modifications
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFFE7F0FA),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           title: const Text(
             'Privacy Policy',
             style: TextStyle(
@@ -340,7 +338,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: _isScrolled ? const Color(0xFFE7F0FA) : Colors.white, // DYNAMIC BACKGROUND
+        backgroundColor: _isScrolled
+            ? const Color(0xFFE7F0FA)
+            : Colors.white, // DYNAMIC BACKGROUND
         elevation: 0,
         leading: IconButton(
           onPressed: () {
@@ -350,10 +350,7 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
             'assets/icons/back-svgrepo-com.svg',
             width: 28,
             height: 28,
-            colorFilter: const ColorFilter.mode(
-              Colors.black,
-              BlendMode.srcIn,
-            ),
+            colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
           ),
         ),
       ),
@@ -365,7 +362,7 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-              
+
               // Register Title
               const Text(
                 'Sign Up',
@@ -376,9 +373,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   color: AppColors.primary,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Text(
                 'Create your jobseeker account',
                 style: TextStyle(
@@ -387,9 +384,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   color: Colors.grey[600],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // First Name Input Field
               const Text(
                 'First Name',
@@ -400,22 +397,20 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F7FA),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: TextField(
                   controller: _firstNameController,
                   textCapitalization: TextCapitalization.words,
-                  onChanged: (value) => setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
+                  onChanged: (value) =>
+                      setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
                   decoration: const InputDecoration(
                     hintText: 'Enter your first name',
                     hintStyle: TextStyle(
@@ -431,9 +426,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Last Name Input Field
               const Text(
                 'Last Name',
@@ -444,22 +439,20 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F7FA),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: TextField(
                   controller: _lastNameController,
                   textCapitalization: TextCapitalization.words,
-                  onChanged: (value) => setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
+                  onChanged: (value) =>
+                      setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
                   decoration: const InputDecoration(
                     hintText: 'Enter your last name',
                     hintStyle: TextStyle(
@@ -475,9 +468,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Email Input Field
               const Text(
                 'Email',
@@ -488,22 +481,20 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F7FA),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  onChanged: (value) => setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
+                  onChanged: (value) =>
+                      setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
                   decoration: const InputDecoration(
                     hintText: 'Example@email.com',
                     hintStyle: TextStyle(
@@ -519,9 +510,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Password Input Field
               const Text(
                 'Password',
@@ -532,22 +523,20 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F7FA),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: TextField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
-                  onChanged: (value) => setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
+                  onChanged: (value) =>
+                      setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
                   decoration: InputDecoration(
                     hintText: 'At least 8 characters',
                     hintStyle: const TextStyle(
@@ -562,7 +551,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                         });
                       },
                       icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: const Color(0xFF9CA3AF),
                         size: 20,
                       ),
@@ -575,9 +566,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Confirm Password Input Field
               const Text(
                 'Confirm Password',
@@ -588,22 +579,20 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F7FA),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: TextField(
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmPasswordVisible,
-                  onChanged: (value) => setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
+                  onChanged: (value) =>
+                      setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
                   decoration: InputDecoration(
                     hintText: 'Confirm your password',
                     hintStyle: const TextStyle(
@@ -614,11 +603,14 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                     suffixIcon: IconButton(
                       onPressed: () {
                         setState(() {
-                          _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                          _isConfirmPasswordVisible =
+                              !_isConfirmPasswordVisible;
                         });
                       },
                       icon: Icon(
-                        _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        _isConfirmPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: const Color(0xFF9CA3AF),
                         size: 20,
                       ),
@@ -631,9 +623,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // TERMS AND CONDITIONS CHECKBOX - NEW ADDITION
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -697,17 +689,21 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Sign Up Button - UPDATED WITH CONDITIONAL ENABLING
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: (_isLoading || !_isFormValid) ? null : _handleRegister, // CONDITIONAL ENABLING
+                  onPressed: (_isLoading || !_isFormValid)
+                      ? null
+                      : _handleRegister, // CONDITIONAL ENABLING
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isFormValid ? AppColors.primary : Colors.grey[400], // CONDITIONAL COLOR
+                    backgroundColor: _isFormValid
+                        ? AppColors.primary
+                        : Colors.grey[400], // CONDITIONAL COLOR
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -733,9 +729,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                         ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Sign In Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -752,7 +748,9 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
                       );
                     },
                     style: TextButton.styleFrom(
@@ -772,7 +770,7 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 40),
             ],
           ),
