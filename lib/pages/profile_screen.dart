@@ -6,6 +6,7 @@ import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 import 'package:sikap/pages/home_screen.dart';
 import 'package:sikap/pages/welcome_screen.dart'; // ADD THIS IMPORT
+import 'package:sikap/utils/loading_screen.dart';
 import 'dart:convert';
 
 class Profile extends StatefulWidget {
@@ -284,13 +285,7 @@ class _ProfileState extends State<Profile> {
 
               // Content Below Header
               Expanded(
-                child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      )
-                    : SingleChildScrollView(
+                child: _isLoading ? LoadingScreen.profileSkeleton() : SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(20, 150, 20, 20),
                         child: Column(
                           children: [
@@ -1096,9 +1091,9 @@ class _ProfileState extends State<Profile> {
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.lightBlue,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1125,6 +1120,7 @@ class _ProfileState extends State<Profile> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: AppColors.lightBlue, // Added light blue background
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

@@ -1,32 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sikap/utils/colors.dart';
-import 'package:sikap/widgets/navigation_helper.dart';
 import 'package:sikap/pages/job_detail_screen.dart';
+import 'package:sikap/pages/login_screen.dart';
 import 'package:sikap/services/api_service.dart';
-import 'package:sikap/services/user_session.dart'; // ADD THIS MISSING IMPORT
-import 'package:sikap/utils/loading_screen.dart'; // Add this import at the top
 
-class JobList extends StatefulWidget {
-  const JobList({super.key});
+class ExploreScreen extends StatefulWidget {
+  const ExploreScreen({super.key});
 
   @override
-  State<JobList> createState() => _JobListState();
+  State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _JobListState extends State<JobList> {
+class _ExploreScreenState extends State<ExploreScreen> {
   List<dynamic> _jobPosts = [];
   List<dynamic> _filteredJobPosts = [];
   bool _isLoading = true;
   TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'All';
-  List<Map<String, dynamic>> _categories = []; // Store category objects
+  List<Map<String, dynamic>> _categories = [];
   bool _categoriesLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadCategories(); // Load categories first
+    _loadCategories();
     _loadJobPosts();
     _searchController.addListener(_onSearchChanged);
   }
@@ -50,35 +48,24 @@ class _JobListState extends State<JobList> {
   }
 
   void _filterJobs() {
-    print("🔍 Filtering jobs...");
-    print("Selected category: $_selectedCategory");
-    print("Total jobs: ${_jobPosts.length}");
-    print("Available categories: $_categories");
-
     setState(() {
       List<dynamic> filteredByCategory = _jobPosts;
 
       // Filter by category first
       if (_selectedCategory != 'All') {
-        // Find the selected category ID
         final selectedCategoryData = _categories.firstWhere(
           (cat) => cat['category_name'] == _selectedCategory,
           orElse: () => {'category_id': null},
         );
 
-        final selectedCategoryId = selectedCategoryData['category_id']
-            ?.toString();
-        print("Selected category ID: $selectedCategoryId");
+        final selectedCategoryId = selectedCategoryData['category_id']?.toString();
 
         if (selectedCategoryId != null) {
           filteredByCategory = _jobPosts.where((job) {
             final jobCategoryId = job['job_category_id']?.toString();
-            print("Job: ${job['job_title']} - Category ID: $jobCategoryId");
             return jobCategoryId == selectedCategoryId;
           }).toList();
         }
-
-        print("Jobs after category filter: ${filteredByCategory.length}");
       }
 
       // Then filter by search query
@@ -96,33 +83,23 @@ class _JobListState extends State<JobList> {
               companyName.contains(searchQuery);
         }).toList();
       }
-
-      print("Final filtered jobs: ${_filteredJobPosts.length}");
     });
   }
 
   Future<void> _loadCategories() async {
     try {
-      print('🔄 Loading categories from API...');
       final result = await ApiService.getCategories();
-
-      print('📥 Categories API response: $result');
-
       if (result['success'] && result['categories'] != null) {
         setState(() {
           _categories = List<Map<String, dynamic>>.from(result['categories']);
           _categoriesLoading = false;
         });
-        print('✅ Categories loaded: ${_categories.length}');
-        print('📋 Categories data: $_categories');
       } else {
-        print('❌ Failed to load categories: ${result['message']}');
         setState(() {
           _categoriesLoading = false;
         });
       }
     } catch (e) {
-      print('❌ Exception loading categories: $e');
       setState(() {
         _categoriesLoading = false;
       });
@@ -138,16 +115,6 @@ class _JobListState extends State<JobList> {
           _filteredJobPosts = _jobPosts;
           _isLoading = false;
         });
-        print('✅ Jobs loaded: ${_jobPosts.length}');
-
-        // Debug: Print ALL jobs to see their structure
-        for (int i = 0; i < _jobPosts.length; i++) {
-          final job = _jobPosts[i];
-          print(
-            '📋 Job $i: ${job['job_title']} - job_category_id: ${job['job_category_id']}',
-          );
-          print('📋 Full job $i structure: $job');
-        }
       } else {
         setState(() {
           _isLoading = false;
@@ -160,14 +127,105 @@ class _JobListState extends State<JobList> {
     }
   }
 
+  void _showLoginPrompt() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.lightBlue,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+          title: const Text(
+            'Login Required',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
+          ),
+          content: const Text(
+            'You need to login to view job details and save jobs. Would you like to login now?',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: AppColors.textGray,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: AppColors.textGray,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: const Text(
+                'Login',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Explore Jobs',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.primary,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: AppColors.primary,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // Sticky Search Bar
+            // Search Bar
             SliverPersistentHeader(
               pinned: true,
               delegate: StickySearchDelegate(
@@ -186,7 +244,7 @@ class _JobListState extends State<JobList> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Categories',
                       style: TextStyle(
                         fontFamily: 'Inter',
@@ -197,18 +255,13 @@ class _JobListState extends State<JobList> {
                     ),
                     const SizedBox(height: 12),
                     _categoriesLoading
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: LoadingScreen.categoryTabsSkeleton(),
-                          )
-                        : _categories.isEmpty
                         ? const Center(
-                            child: Text(
-                              'No categories available',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                                color: AppColors.textGray,
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
                               ),
                             ),
                           )
@@ -216,7 +269,9 @@ class _JobListState extends State<JobList> {
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
+                                // "All" category first
                                 _buildCategoryTab('All', null),
+                                // Then all database categories
                                 ..._categories.map((category) {
                                   return _buildCategoryTab(
                                     category['category_name'],
@@ -236,86 +291,79 @@ class _JobListState extends State<JobList> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: _isLoading
                   ? SliverFillRemaining(
-                      hasScrollBody: false,
-                      child:
-                          LoadingScreen.jobListSkeleton(), // Use your skeleton loader here
-                    )
-                  : _filteredJobPosts.isEmpty
-                  ? SliverFillRemaining(
                       child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.search_off,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _getEmptyMessage(),
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 16,
-                                color: AppColors.textGray,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            if (_searchController.text.isNotEmpty ||
-                                _selectedCategory != 'All') ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                'Try different search terms or categories',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14,
-                                  color: Colors.grey[500],
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ],
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
                         ),
                       ),
                     )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        if (index >= _filteredJobPosts.length) return null;
-
-                        final job = _filteredJobPosts[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildJobCard(context: context, job: job),
-                        );
-                      }, childCount: _filteredJobPosts.length),
-                    ),
+                  : _filteredJobPosts.isEmpty
+                      ? SliverFillRemaining(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _getEmptyMessage(),
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 16,
+                                    color: AppColors.textGray,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              if (index >= _filteredJobPosts.length) return null;
+                              final job = _filteredJobPosts[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _buildJobCard(job: job),
+                              );
+                            },
+                            childCount: _filteredJobPosts.length,
+                          ),
+                        ),
             ),
 
             // Bottom padding
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
         ),
       ),
-      bottomNavigationBar: NavigationHelper.createBottomNavBar(context, 1),
     );
   }
 
   Widget _buildCategoryTab(String categoryName, int? jobCount) {
     final isSelected = categoryName == _selectedCategory;
-
+    
     return Padding(
       padding: const EdgeInsets.only(right: 12),
       child: GestureDetector(
         onTap: () => _onCategoryChanged(categoryName),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primary : Colors.transparent,
             border: Border.all(
               color: AppColors.primary,
-              width: 1.0, // Reduced from 1.5
+              width: 1.0,
             ),
-            borderRadius: BorderRadius.circular(20), // Increased from 4
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -332,15 +380,12 @@ class _JobListState extends State<JobList> {
               if (jobCount != null && jobCount > 0) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.white.withOpacity(0.2)
+                    color: isSelected 
+                        ? Colors.white.withOpacity(0.2) 
                         : AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12), // Increased from 2
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     jobCount.toString(),
@@ -372,25 +417,17 @@ class _JobListState extends State<JobList> {
     }
   }
 
-  Widget _buildJobCard({
-    required BuildContext context,
-    required Map<String, dynamic> job,
-  }) {
+  Widget _buildJobCard({required Map<String, dynamic> job}) {
     return GestureDetector(
       onTap: () {
-        // Navigate to job detail screen with job ID
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => JobDetailScreen(jobId: job['job_id']),
-          ),
-        );
+        // Show login prompt when clicking on job card
+        _showLoginPrompt();
       },
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7FBFF), // Light blue background
+          color: const Color(0xFFF7FBFF),
           border: Border.all(color: Colors.grey[200]!),
           borderRadius: BorderRadius.circular(4),
           boxShadow: [
@@ -405,7 +442,7 @@ class _JobListState extends State<JobList> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row with company info and bookmark
+            // Header row with company info and login prompt
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -439,7 +476,7 @@ class _JobListState extends State<JobList> {
                     children: [
                       Text(
                         job['company']?['company_name'] ?? 'Company',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
                           color: AppColors.placeholderBlue,
@@ -459,38 +496,39 @@ class _JobListState extends State<JobList> {
                   ),
                 ),
 
-                // Bookmark Icon
+                // Login to Save prompt
                 GestureDetector(
-                  onTap: () async {
-                    final userSession = UserSession.instance;
-                    final jobseekerId = userSession.jobseekerId;
-
-                    if (jobseekerId != null) {
-                      final result = await ApiService.saveJob(
-                        jobseekerId,
-                        job['job_id'],
-                      );
-                      if (result['success']) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Job saved successfully!')),
-                        );
-                        // Optionally refresh the job list or update the icon
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              result['message'] ?? 'Failed to save job',
-                            ),
+                  onTap: _showLoginPrompt,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.secondary,
+                        width: 1,
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.bookmark_border,
+                          size: 16,
+                          color: AppColors.secondary,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Save',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.secondary,
                           ),
-                        );
-                      }
-                    }
-                  },
-                  child: Icon(
-                    Icons
-                        .bookmark_border, // This will become Icons.bookmark when saved
-                    size: 24,
-                    color: AppColors.secondary,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -501,7 +539,7 @@ class _JobListState extends State<JobList> {
             // Location
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.location_on_outlined,
                   color: AppColors.placeholderBlue,
                   size: 18,
@@ -509,7 +547,7 @@ class _JobListState extends State<JobList> {
                 const SizedBox(width: 4),
                 Text(
                   job['location'] ?? 'Location',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     color: AppColors.placeholderBlue,
@@ -530,7 +568,7 @@ class _JobListState extends State<JobList> {
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.borderGray,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     job['job_type'] ?? 'Full-time',
@@ -562,6 +600,47 @@ class _JobListState extends State<JobList> {
                 ),
               ],
             ),
+
+            const SizedBox(height: 12),
+
+            // Login prompt banner
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Login to view full job details and apply',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    color: AppColors.primary,
+                    size: 12,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -569,17 +648,17 @@ class _JobListState extends State<JobList> {
   }
 }
 
-// Updated Custom delegate for sticky search bar
+// Reuse the same StickySearchDelegate from job_list_screen.dart
 class StickySearchDelegate extends SliverPersistentHeaderDelegate {
   final TextEditingController searchController;
 
   StickySearchDelegate({required this.searchController});
 
   @override
-  double get minExtent => 80.0; // Reduced from 100.0
+  double get minExtent => 80.0;
 
   @override
-  double get maxExtent => 80.0; // Reduced from 100.0
+  double get maxExtent => 80.0;
 
   @override
   Widget build(
@@ -588,18 +667,18 @@ class StickySearchDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     return Container(
-      height: 80.0, // Reduced from 100.0
+      height: 80.0,
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 12,
-      ), // Reduced vertical padding
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Container(
-        height: 48.0, // Reduced from 64.0
+        height: 48.0,
         decoration: BoxDecoration(
           color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12), // Added border radius
-          border: Border.all(color: Colors.grey[300]!, width: 1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey[300]!,
+            width: 1,
+          ),
         ),
         child: TextField(
           controller: searchController,
@@ -609,13 +688,13 @@ class StickySearchDelegate extends SliverPersistentHeaderDelegate {
             hintStyle: const TextStyle(
               color: AppColors.placeholderBlue,
               fontFamily: 'Inter',
-              fontSize: 14, // Reduced font size
+              fontSize: 14,
             ),
             prefixIcon: Padding(
-              padding: const EdgeInsets.all(12.0), // Reduced padding
+              padding: const EdgeInsets.all(12.0),
               child: SvgPicture.asset(
                 'assets/icons/search.svg',
-                width: 18, // Reduced size
+                width: 18,
                 height: 18,
                 colorFilter: const ColorFilter.mode(
                   AppColors.placeholderBlue,
@@ -625,7 +704,7 @@ class StickySearchDelegate extends SliverPersistentHeaderDelegate {
                   return const Icon(
                     Icons.search,
                     color: AppColors.placeholderBlue,
-                    size: 18, // Reduced size
+                    size: 18,
                   );
                 },
               ),
@@ -638,14 +717,14 @@ class StickySearchDelegate extends SliverPersistentHeaderDelegate {
                     icon: const Icon(
                       Icons.clear,
                       color: AppColors.placeholderBlue,
-                      size: 18, // Reduced size
+                      size: 18,
                     ),
                   )
                 : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 12, // Reduced vertical padding
+              vertical: 12,
             ),
             isDense: true,
           ),
