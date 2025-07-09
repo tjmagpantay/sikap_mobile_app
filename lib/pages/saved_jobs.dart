@@ -6,6 +6,7 @@ import 'package:sikap/pages/job_detail_screen.dart';
 import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 import 'package:sikap/pages/home_screen.dart';
+import 'package:sikap/utils/loading_screen.dart'; 
 
 class SavedJobs extends StatefulWidget {
   const SavedJobs({super.key});
@@ -133,12 +134,15 @@ class _SavedJobsState extends State<SavedJobs> {
           ),
 
           // Body content
-          Expanded(
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  )
-                : _errorMessage.isNotEmpty
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: _isLoading
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child:
+                          LoadingScreen.jobListSkeleton(), // Use your skeleton loader here
+                    )
+                  : _savedJobs.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

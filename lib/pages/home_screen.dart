@@ -529,18 +529,13 @@ class _HomePageState extends State<HomePage> {
               ),
 
               const SizedBox(height: 16),
-
               // Recent Jobs List
-              _isLoadingRecent
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      ),
+                _isLoadingRecent
+                  ? Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: LoadingScreen.recentJobSkeleton(),
                     )
-                  : _recentJobs.isEmpty
+                  :  _recentJobs.isEmpty
                   ? Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(

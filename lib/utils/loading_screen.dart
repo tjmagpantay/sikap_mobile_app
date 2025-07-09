@@ -450,6 +450,59 @@ class LoadingScreen {
     );
   }
 
+static Widget recentJobSkeleton() {
+  return Column(
+    children: List.generate(
+      3, // Show 3 skeleton cards for recent jobs
+      (index) => Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Company Logo Skeleton
+            LoadingScreen.skeleton(
+              width: 40,
+              height: 40,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            const SizedBox(width: 12),
+            // Job Info Skeleton
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LoadingScreen.skeleton(width: 100, height: 14),
+                  const SizedBox(height: 8),
+                  LoadingScreen.skeleton(width: 60, height: 12),
+                ],
+              ),
+            ),
+            // "NEW" Badge Skeleton
+            LoadingScreen.skeleton(
+              width: 36,
+              height: 20,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
   static Widget categoryGridSkeleton() {
   return Column(
     children: [

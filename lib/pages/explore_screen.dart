@@ -4,6 +4,7 @@ import 'package:sikap/utils/colors.dart';
 import 'package:sikap/pages/job_detail_screen.dart';
 import 'package:sikap/pages/login_screen.dart';
 import 'package:sikap/services/api_service.dart';
+import 'package:sikap/utils/loading_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -134,7 +135,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         return AlertDialog(
           backgroundColor: AppColors.lightBlue,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(6),
           ),
           title: const Text(
             'Login Required',
@@ -255,13 +256,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ),
                     const SizedBox(height: 12),
                     _categoriesLoading
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: LoadingScreen.categoryTabsSkeleton(),
+                          )
+                        : _categories.isEmpty
                         ? const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.primary,
+                            child: Text(
+                              'No categories available',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                                color: AppColors.textGray,
                               ),
                             ),
                           )
@@ -291,12 +297,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: _isLoading
                   ? SliverFillRemaining(
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    )
+                      hasScrollBody: false,
+                      child:
+                          LoadingScreen.jobListSkeleton(), 
+                  )      
                   : _filteredJobPosts.isEmpty
                       ? SliverFillRemaining(
                           child: Center(

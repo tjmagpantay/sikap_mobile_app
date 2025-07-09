@@ -4,8 +4,8 @@ import 'package:sikap/utils/colors.dart';
 import 'package:sikap/widgets/navigation_helper.dart';
 import 'package:sikap/pages/job_detail_screen.dart';
 import 'package:sikap/services/api_service.dart';
-import 'package:sikap/services/user_session.dart'; // ADD THIS MISSING IMPORT
-import 'package:sikap/utils/loading_screen.dart'; // Add this import at the top
+import 'package:sikap/services/user_session.dart'; 
+import 'package:sikap/utils/loading_screen.dart'; 
 
 class JobList extends StatefulWidget {
   const JobList({super.key});
