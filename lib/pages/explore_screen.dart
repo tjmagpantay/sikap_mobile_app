@@ -135,7 +135,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         return AlertDialog(
           backgroundColor: AppColors.lightBlue,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(8),
           ),
           title: const Text(
             'Login Required',
@@ -202,7 +202,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
         title: const Text(
           'Explore Jobs',

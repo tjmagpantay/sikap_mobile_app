@@ -492,7 +492,7 @@ class _HomePageState extends State<HomePage> {
                           .toList(),
                     ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
               // Recent Jobs Section
               Row(
@@ -561,7 +561,7 @@ class _HomePageState extends State<HomePage> {
                           .toList(),
                     ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
               // Quick Stats Section
               const Text(
@@ -609,7 +609,7 @@ class _HomePageState extends State<HomePage> {
               ),
 
               // Bottom spacing for navigation bar
-              const SizedBox(height: 100),
+              const SizedBox(height: 25),
             ],
           ),
         ),

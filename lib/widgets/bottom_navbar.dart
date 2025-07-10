@@ -14,19 +14,19 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 80, // Reduced from 110 to 80
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: 24,
+        top: 8,
+      ), // top: 2
+      child: Container(
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.primary, // Main background is primary
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -42,8 +42,7 @@ class BottomNavBar extends StatelessWidget {
 
   Widget _buildNavItem(int index, String iconName, String label) {
     final bool isActive = currentIndex == index;
-    
-    // Fixed icon path logic to handle 'saved' correctly
+
     String iconPath;
     if (isActive) {
       iconPath = 'assets/icons/$iconName-secondary.svg';
@@ -54,7 +53,10 @@ class BottomNavBar extends StatelessWidget {
     return GestureDetector(
       onTap: () => onTap(index),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8), // Adjusted padding
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+        decoration: isActive
+            ? BoxDecoration(borderRadius: BorderRadius.circular(8))
+            : null,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -63,10 +65,11 @@ class BottomNavBar extends StatelessWidget {
               width: 24,
               height: 24,
               colorFilter: ColorFilter.mode(
-                isActive ? AppColors.secondary : Colors.white,
+                isActive
+                    ? AppColors.secondary
+                    : Colors.white, // Active: secondary, Inactive: white
                 BlendMode.srcIn,
               ),
-              // Add error handling
               errorBuilder: (context, error, stackTrace) {
                 return Icon(
                   _getIconFallback(iconName),
@@ -75,11 +78,13 @@ class BottomNavBar extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                color: isActive ? AppColors.secondary : Colors.white,
+                color: isActive
+                    ? AppColors.secondary
+                    : Colors.white, // Active: secondary, Inactive: white
                 fontSize: 12,
                 fontFamily: 'Inter',
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
@@ -91,7 +96,6 @@ class BottomNavBar extends StatelessWidget {
     );
   }
 
-  // Helper method for icon fallbacks
   IconData _getIconFallback(String iconName) {
     switch (iconName) {
       case 'home':

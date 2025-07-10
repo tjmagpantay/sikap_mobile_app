@@ -6,7 +6,7 @@ import 'package:sikap/pages/job_detail_screen.dart';
 import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 import 'package:sikap/pages/home_screen.dart';
-import 'package:sikap/utils/loading_screen.dart'; 
+import 'package:sikap/utils/loading_screen.dart';
 
 class SavedJobs extends StatefulWidget {
   const SavedJobs({super.key});
@@ -134,15 +134,13 @@ class _SavedJobsState extends State<SavedJobs> {
           ),
 
           // Body content
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: _isLoading
-                  ? SliverFillRemaining(
-                      hasScrollBody: false,
-                      child:
-                          LoadingScreen.jobListSkeleton(), // Use your skeleton loader here
-                    )
-                  : _savedJobs.isEmpty
+          Expanded(
+            child: _isLoading
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: LoadingScreen.jobListSkeleton(),
+                  )
+                : _errorMessage.isNotEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -175,7 +173,7 @@ class _SavedJobsState extends State<SavedJobs> {
                     ),
                   )
                 : _savedJobs.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -184,8 +182,8 @@ class _SavedJobsState extends State<SavedJobs> {
                           size: 80,
                           color: AppColors.primary,
                         ),
-                        SizedBox(height: 16),
-                        Text(
+                        const SizedBox(height: 16),
+                        const Text(
                           'No Saved Jobs Yet',
                           style: TextStyle(
                             fontSize: 16,
@@ -194,8 +192,8 @@ class _SavedJobsState extends State<SavedJobs> {
                             color: AppColors.primary,
                           ),
                         ),
-                        SizedBox(height: 8),
-                        Text(
+                        const SizedBox(height: 8),
+                        const Text(
                           'Jobs you save will appear here',
                           style: TextStyle(
                             fontSize: 14,
@@ -206,26 +204,21 @@ class _SavedJobsState extends State<SavedJobs> {
                       ],
                     ),
                   )
-                : Padding(
+                : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: ListView.builder(
-                      itemCount: _savedJobs.length,
-                      itemBuilder: (context, index) {
-                        final savedJob =
-                            _savedJobs[index]; // This is now a saved job, not application
-                        final job = savedJob['job'];
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildSavedJobCard(
-                            context: context,
-                            savedJob:
-                                savedJob, // Change from 'application' to 'savedJob'
-                            job: job,
-                          ),
-                        );
-                      },
-                    ),
+                    itemCount: _savedJobs.length,
+                    itemBuilder: (context, index) {
+                      final savedJob = _savedJobs[index];
+                      final job = savedJob['job'];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildSavedJobCard(
+                          context: context,
+                          savedJob: savedJob,
+                          job: job,
+                        ),
+                      );
+                    },
                   ),
           ),
         ],
