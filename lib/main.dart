@@ -4,8 +4,6 @@ import 'package:sikap/pages/home_screen.dart';
 import 'package:sikap/pages/job_list_screen.dart';
 import 'package:sikap/pages/saved_jobs.dart';
 import 'package:sikap/pages/profile_screen.dart';
-import 'package:sikap/services/user_session.dart';
-import 'package:sikap/services/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

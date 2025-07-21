@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sikap/pages/welcome_first.dart';
 import 'package:sikap/utils/colors.dart';
-import 'package:sikap/services/permission_handler.dart';
-import 'package:permission_handler/permission_handler.dart'; // Add this import
+import 'package:sikap/pages/permission_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,13 +17,14 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   bool _permissionHandled = false;
+  DateTime? _animationStartTime;
 
   @override
   void initState() {
     super.initState();
 
     _logoAnimationController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 5),
       vsync: this,
     );
 
@@ -48,13 +48,26 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _handlePermissionAndAnimation() async {
+    _animationStartTime = DateTime.now();
+
     // First show the splash animation
     _logoAnimationController.forward();
     await Future.delayed(const Duration(milliseconds: 500));
     _dotsAnimationController.repeat();
 
-    // Then handle permission while animation plays
-    await _requestNotificationPermission();
+    // Navigate to permission screen if not handled
+    if (!_permissionHandled) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => PermissionScreen(
+            onGranted: () {
+              _permissionHandled = true;
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+      );
+    }
 
     // After permission is handled, wait for minimum splash time (4.5s total)
     final splashTimeElapsed = DateTime.now().difference(_animationStartTime!);
@@ -71,164 +84,6 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
-  DateTime? _animationStartTime;
-
-  Future<void> _requestNotificationPermission() async {
-    _animationStartTime = DateTime.now();
-
-    // Show custom dialog for notification permission
-    final shouldRequest =
-        await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppColors.lightBlue,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Center(
-              child: Text(
-                'Enable Notifications',
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.notifications_active,
-                  size: 48,
-                  color: AppColors.secondary,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Get important updates and reminders.\nYou can change this later in settings.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text(
-                  'Not Now',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    color: AppColors.secondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text(
-                  'Allow Notifications',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-
-    if (!shouldRequest) {
-      // User chose not to request permissions now
-      return;
-    }
-
-    // Actually request the permission
-    bool granted = await requestNotificationPermission();
-
-    if (!granted) {
-      // Show more helpful guidance if denied
-      final shouldOpenSettings =
-          await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: AppColors.lightBlue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Center(
-                child: Text(
-                  'Permission Required',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              content: const Text(
-                'Notifications are disabled. Please enable them in your device settings for the best experience with our app.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  color: AppColors.primary,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      color: AppColors.secondary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text(
-                    'Open Settings',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ) ??
-          false;
-
-      if (shouldOpenSettings && mounted) {
-        await openAppSettings();
-      }
-    }
-  }
-
   @override
   void dispose() {
     _logoAnimationController.dispose();
@@ -239,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: const Color.fromARGB(255, 8, 53, 95),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

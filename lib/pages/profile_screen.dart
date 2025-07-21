@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sikap/utils/colors.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:sikap/widgets/navigation_helper.dart';
 import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 import 'package:sikap/pages/home_screen.dart';
 import 'package:sikap/pages/welcome_screen.dart'; // ADD THIS IMPORT
 import 'package:sikap/utils/loading_screen.dart';
-import 'dart:convert';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});

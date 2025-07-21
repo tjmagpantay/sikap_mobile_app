@@ -4,7 +4,7 @@ import 'package:sikap/utils/colors.dart';
 import 'package:sikap/pages/home_screen.dart';
 import 'package:sikap/pages/login_screen.dart';
 import 'package:sikap/services/api_service.dart';
-import 'package:sikap/services/user_session.dart';
+import 'package:flutter/services.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -28,6 +28,9 @@ class _RegisterPageState extends State<RegisterPage> {
       TextEditingController();
   final ScrollController _scrollController =
       ScrollController(); // ADD CONTROLLER
+
+  String? _firstNameError;
+  String? _lastNameError;
 
   @override
   void initState() {
@@ -91,13 +94,33 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Validate email format
+    // Validate first name and last name (letters only)
+    if (!RegExp(r'^[a-zA-Z]+$').hasMatch(_firstNameController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('First name should only contain letters'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (!RegExp(r'^[a-zA-Z]+$').hasMatch(_lastNameController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Last name should only contain letters'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate email format (must be gmail or yahoo)
     if (!RegExp(
-      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+      r'^[\w-\.]+@(gmail\.com|yahoo\.com)$',
     ).hasMatch(_emailController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a valid email address'),
+          content: Text('Email must be @gmail.com or @yahoo.com'),
           backgroundColor: Colors.red,
         ),
       );
@@ -361,7 +384,7 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
 
               // Register Title
               const Text(
@@ -409,8 +432,18 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                 child: TextField(
                   controller: _firstNameController,
                   textCapitalization: TextCapitalization.words,
-                  onChanged: (value) =>
-                      setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
+                  // inputFormatters: [
+                  //   FilteringTextInputFormatter.allow(
+                  //     RegExp(r'[a-zA-Z]'),
+                  //   ), // Only letters
+                  // ],
+                  onChanged: (value) {
+                    setState(() {
+                      _firstNameError = RegExp(r'^[a-zA-Z]*$').hasMatch(value)
+                          ? null
+                          : 'Only letters are allowed';
+                    });
+                  },
                   decoration: const InputDecoration(
                     hintText: 'Enter your first name',
                     hintStyle: TextStyle(
@@ -426,6 +459,14 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ),
               ),
+              if (_firstNameError != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, top: 4),
+                  child: Text(
+                    _firstNameError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ),
 
               const SizedBox(height: 16),
 
@@ -451,8 +492,18 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                 child: TextField(
                   controller: _lastNameController,
                   textCapitalization: TextCapitalization.words,
-                  onChanged: (value) =>
-                      setState(() {}), // ADD THIS TO REFRESH BUTTON STATE
+                  // inputFormatters: [
+                  //   FilteringTextInputFormatter.allow(
+                  //     RegExp(r'[a-zA-Z]'),
+                  //   ), // Only letters
+                  // ],
+                  onChanged: (value) {
+                    setState(() {
+                      _lastNameError = RegExp(r'^[a-zA-Z]*$').hasMatch(value)
+                          ? null
+                          : 'Only letters are allowed';
+                    });
+                  },
                   decoration: const InputDecoration(
                     hintText: 'Enter your last name',
                     hintStyle: TextStyle(
@@ -468,6 +519,14 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   ),
                 ),
               ),
+              if (_lastNameError != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, top: 4),
+                  child: Text(
+                    _lastNameError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ),
 
               const SizedBox(height: 16),
 

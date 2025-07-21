@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sikap/utils/colors.dart';
-import 'package:sikap/pages/job_detail_screen.dart';
 import 'package:sikap/pages/login_screen.dart';
 import 'package:sikap/services/api_service.dart';
 import 'package:sikap/utils/loading_screen.dart';

@@ -119,7 +119,7 @@ class UserSession {
         print('🔄 Token expiring soon, refreshing...');
 
         final response = await http.post(
-          Uri.parse('http://192.168.1.4/sikap_api/php/refresh_token.php'),
+          Uri.parse('http://192.168.1.6/sikap_api/php/refresh_token.php'),
           headers: {
             'Authorization': 'Bearer $_token',
             'Content-Type': 'application/json',
