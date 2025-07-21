@@ -5,10 +5,11 @@ import 'package:sikap/pages/home_screen.dart';
 import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 import 'package:sikap/pages/register_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-  
+
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -53,8 +54,8 @@ class _LoginPageState extends State<LoginPage> {
 
       if (result['success']) {
         // Store user data in session
-        UserSession.instance.setUserData(result['user'], result['token']);  
-        
+        UserSession.instance.setUserData(result['user'], result['token']);
+
         // Navigate to home screen
         Navigator.pushReplacement(
           context,
@@ -72,15 +73,24 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoading = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
+
+void _openForgotPassword() async {
+  final url = 'http://192.168.1.8/sikap/public/index.php?page=forgot-password';
+  final uri = Uri.parse(url);
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Could not open link: $e'), backgroundColor: Colors.red),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -97,10 +107,7 @@ class _LoginPageState extends State<LoginPage> {
             'assets/icons/back-svgrepo-com.svg',
             width: 28,
             height: 28,
-            colorFilter: const ColorFilter.mode(
-              Colors.black,
-              BlendMode.srcIn,
-            ),
+            colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
           ),
         ),
       ),
@@ -110,8 +117,9 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 60), // Added top spacing instead of center alignment
-              
+              const SizedBox(
+                height: 60,
+              ), // Added top spacing instead of center alignment
               // Login Title
               const Text(
                 'Login',
@@ -122,9 +130,9 @@ class _LoginPageState extends State<LoginPage> {
                   color: AppColors.primary,
                 ),
               ),
-              
+
               const SizedBox(height: 28),
-              
+
               // Email Input Field
               const Text(
                 'Email',
@@ -135,17 +143,14 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F7FA), // Light gray background
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: TextField(
                   controller: _emailController,
@@ -165,9 +170,9 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Password Input Field
               const Text(
                 'Password',
@@ -178,17 +183,14 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F7FA), // Light gray background
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                 ),
                 child: TextField(
                   controller: _passwordController,
@@ -207,7 +209,9 @@ class _LoginPageState extends State<LoginPage> {
                         });
                       },
                       icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: const Color(0xFF9CA3AF),
                         size: 20,
                       ),
@@ -220,16 +224,14 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Forgot Password
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    // TODO: Navigate to forgot password page
-                  },
+                  onPressed: _openForgotPassword,
                   child: const Text(
                     'Forgot Password?',
                     style: TextStyle(
@@ -241,9 +243,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24), // Increased spacing before button
-              
               // Sign In Button
               SizedBox(
                 width: double.infinity,
@@ -277,10 +278,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                 ),
               ),
-              
+
               // Spacer to push Sign Up text down
               const SizedBox(height: 24),
-              
+
               // Sign Up Text at bottom
               Padding(
                 padding: const EdgeInsets.only(bottom: 40), // Bottom padding
@@ -299,7 +300,9 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegisterPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterPage(),
+                          ),
                         );
                       },
                       style: TextButton.styleFrom(

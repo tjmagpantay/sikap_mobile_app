@@ -47,7 +47,7 @@ class PermissionScreen extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.bold,
                     fontSize: 24,
-                    color: AppColors.secondary,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 16),

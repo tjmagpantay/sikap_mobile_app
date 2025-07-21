@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'user_session.dart';
 
 class ApiService {
-  static const baseUrl = 'http://192.168.1.6/sikap_api/php';
+  static const baseUrl = 'http://192.168.1.8/sikap_api/php';
 
   // Auto-retry with token refresh
   static Future<http.Response> _makeRequest(
@@ -317,6 +317,6 @@ class ApiService {
   static String getImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) return '';
     if (imagePath.startsWith('http')) return imagePath;
-    return 'http://192.168.1.6/sikap_api/$imagePath';
+    return 'http://192.168.1.8/sikap_api/$imagePath';
   }
 }

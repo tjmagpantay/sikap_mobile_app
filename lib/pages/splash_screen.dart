@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sikap/pages/welcome_first.dart';
+import 'package:sikap/pages/welcome_two.dart';
+import 'package:sikap/pages/welcome_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sikap/utils/colors.dart';
 import 'package:sikap/pages/permission_screen.dart';
 
@@ -44,42 +47,70 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _handlePermissionAndAnimation();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
+    print('ONBOARDING FLAG: $onboardingComplete'); // <-- Add this line
+    if (onboardingComplete) {
+      _startSplashAnimation(goToWelcomePage: true);
+    } else {
+      _startSplashAnimation(goToWelcomePage: false);
+    }
+  }
+
+  Future<void> _startSplashAnimation({required bool goToWelcomePage}) async {
+    _animationStartTime = DateTime.now();
+    _logoAnimationController.forward();
+    await Future.delayed(const Duration(milliseconds: 2000));
+    _dotsAnimationController.repeat();
+
+    if (goToWelcomePage) {
+      final splashTimeElapsed = DateTime.now().difference(_animationStartTime!);
+      final remainingTime =
+          const Duration(seconds: 4, milliseconds: 4000) - splashTimeElapsed;
+      if (remainingTime > Duration.zero) {
+        await Future.delayed(remainingTime);
+      }
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const WelcomePage()),
+        );
+      }
+    } else {
+      await _handlePermissionAndAnimation();
+    }
   }
 
   Future<void> _handlePermissionAndAnimation() async {
-    _animationStartTime = DateTime.now();
-
-    // First show the splash animation
-    _logoAnimationController.forward();
-    await Future.delayed(const Duration(milliseconds: 500));
-    _dotsAnimationController.repeat();
-
-    // Navigate to permission screen if not handled
     if (!_permissionHandled) {
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => PermissionScreen(
-            onGranted: () {
+            onGranted: () async {
               _permissionHandled = true;
               Navigator.of(context).pop();
+              // Set onboarding flag here
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('onboarding_complete', true);
             },
           ),
         ),
       );
     }
 
-    // After permission is handled, wait for minimum splash time (4.5s total)
-    final splashTimeElapsed = DateTime.now().difference(_animationStartTime!);
-    final remainingTime =
-        const Duration(seconds: 4, milliseconds: 500) - splashTimeElapsed;
-    if (remainingTime > Duration.zero) {
-      await Future.delayed(remainingTime);
-    }
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const WelcomeFirst()));
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const WelcomeTwo()));
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const WelcomeFirst()),
+        MaterialPageRoute(builder: (context) => const WelcomePage()),
       );
     }
   }
@@ -142,9 +173,7 @@ class _SplashScreenState extends State<SplashScreen>
                 );
               },
             ),
-
             const SizedBox(height: 60),
-
             AnimatedBuilder(
               animation: _dotsAnimationController,
               builder: (context, child) {
@@ -163,7 +192,6 @@ class _SplashScreenState extends State<SplashScreen>
                         1.0,
                       )),
                     );
-
                     return Container(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       child: AnimatedContainer(

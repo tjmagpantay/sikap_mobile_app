@@ -6,6 +6,7 @@ import 'package:sikap/services/user_session.dart';
 import 'package:sikap/pages/home_screen.dart';
 import 'package:sikap/pages/welcome_screen.dart'; // ADD THIS IMPORT
 import 'package:sikap/utils/loading_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -180,6 +181,7 @@ class _ProfileState extends State<Profile> {
     return filledFields / totalFields;
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,8 +260,16 @@ class _ProfileState extends State<Profile> {
                         top: 16,
                         right: 16,
                         child: GestureDetector(
-                          onTap: () {
-                            // Handle edit action
+                          onTap: () async {
+                            final url = 'http://192.168.1.8/sikap/public/index.php?page=login-jobseeker';
+                            final uri = Uri.parse(url);
+                            try {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Could not open link: $e'), backgroundColor: Colors.red),
+                              );
+                            }
                           },
                           child: Container(
                             width: 40,
@@ -283,7 +293,9 @@ class _ProfileState extends State<Profile> {
 
               // Content Below Header
               Expanded(
-                child: _isLoading ? LoadingScreen.profileSkeleton() : SingleChildScrollView(
+                child: _isLoading
+                    ? LoadingScreen.profileSkeleton()
+                    : SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(20, 150, 20, 20),
                         child: Column(
                           children: [
@@ -540,7 +552,7 @@ class _ProfileState extends State<Profile> {
                       fontWeight: FontWeight.bold,
                       color: completion >= 0.8
                           ? AppColors.primary
-                          : Colors.orange,
+                          : AppColors.secondary,
                     ),
                   ),
                 ],

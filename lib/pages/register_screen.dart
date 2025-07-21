@@ -94,20 +94,24 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Validate first name and last name (letters only)
-    if (!RegExp(r'^[a-zA-Z]+$').hasMatch(_firstNameController.text)) {
+    // Validate first name and last name (letters only, starts with uppercase)
+    if (!RegExp(r'^[A-Z][a-zA-Z]*$').hasMatch(_firstNameController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('First name should only contain letters'),
+          content: Text(
+            'First name should start with an uppercase letter and only contain letters',
+          ),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
-    if (!RegExp(r'^[a-zA-Z]+$').hasMatch(_lastNameController.text)) {
+    if (!RegExp(r'^[A-Z][a-zA-Z]*$').hasMatch(_lastNameController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Last name should only contain letters'),
+          content: Text(
+            'Last name should start with an uppercase letter and only contain letters',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -439,9 +443,15 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   // ],
                   onChanged: (value) {
                     setState(() {
-                      _firstNameError = RegExp(r'^[a-zA-Z]*$').hasMatch(value)
-                          ? null
-                          : 'Only letters are allowed';
+                      if (!RegExp(r'^[A-Z]').hasMatch(value) &&
+                          value.isNotEmpty) {
+                        _firstNameError = 'Must start with uppercase letter';
+                      } else if (!RegExp(r'^[A-Z][a-zA-Z]*').hasMatch(value) &&
+                          value.isNotEmpty) {
+                        _firstNameError = 'Only letters are allowed';
+                      } else {
+                        _firstNameError = null;
+                      }
                     });
                   },
                   decoration: const InputDecoration(
@@ -499,9 +509,15 @@ For concerns, contact us at sikap.dev2025@gmail.com.''',
                   // ],
                   onChanged: (value) {
                     setState(() {
-                      _lastNameError = RegExp(r'^[a-zA-Z]*$').hasMatch(value)
-                          ? null
-                          : 'Only letters are allowed';
+                      if (!RegExp(r'^[A-Z]').hasMatch(value) &&
+                          value.isNotEmpty) {
+                        _lastNameError = 'Must start with uppercase letter';
+                      } else if (!RegExp(r'^[A-Z][a-zA-Z]*').hasMatch(value) &&
+                          value.isNotEmpty) {
+                        _lastNameError = 'Only letters are allowed';
+                      } else {
+                        _lastNameError = null;
+                      }
                     });
                   },
                   decoration: const InputDecoration(
