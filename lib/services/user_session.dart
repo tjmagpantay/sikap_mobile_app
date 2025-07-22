@@ -209,5 +209,6 @@ class UserSession {
     _prefsUserId = prefs.getString('userId');
     _token = prefs.getString('token');
     // Load other info as needed
+    print('✅ Session loaded: userId=$_prefsUserId, token=$_token');
   }
 }

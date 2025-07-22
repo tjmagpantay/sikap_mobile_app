@@ -5,6 +5,8 @@ import 'package:sikap/pages/welcome_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sikap/utils/colors.dart';
 import 'package:sikap/pages/permission_screen.dart';
+import 'package:sikap/pages/home_screen.dart';
+import 'package:sikap/services/user_session.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -53,11 +55,29 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
-    print('ONBOARDING FLAG: $onboardingComplete'); // <-- Add this line
-    if (onboardingComplete) {
-      _startSplashAnimation(goToWelcomePage: true);
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    print('ONBOARDING FLAG: $onboardingComplete');
+    print('LOGIN FLAG: $isLoggedIn');
+
+    if (isLoggedIn) {
+      final sessionLoaded = await UserSession.instance.loadSession();
+      if (sessionLoaded) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const WelcomePage()),
+        );
+      }
+    } else if (onboardingComplete) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const WelcomePage()),
+      );
     } else {
-      _startSplashAnimation(goToWelcomePage: false);
+      // First install: show onboarding flow
+      await _startSplashAnimation(goToWelcomePage: false);
     }
   }
 
@@ -92,21 +112,26 @@ class _SplashScreenState extends State<SplashScreen>
             onGranted: () async {
               _permissionHandled = true;
               Navigator.of(context).pop();
-              // Set onboarding flag here
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('onboarding_complete', true);
             },
           ),
         ),
       );
     }
 
+    // Show onboarding screens
     await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const WelcomeFirst()));
     await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const WelcomeTwo()));
+
+    // Set onboarding flag here, after all onboarding screens
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_complete', true);
+
+    // DO NOT set isLoggedIn or userId/token here!
+    // The login screen should handle saving user credentials after a successful login.
 
     if (mounted) {
       Navigator.of(context).pushReplacement(

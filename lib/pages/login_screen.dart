@@ -60,8 +60,8 @@ class _LoginPageState extends State<LoginPage> {
         // Save login state and user ID in shared preferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
-        await prefs.setString('userId', result['user']['id'].toString());
-        await prefs.setString('token', result['token']); // If you use a token
+        // await prefs.setString('userId', result['user']['id'].toString());
+        // await prefs.setString('token', result['token']); // If you use a token
         // Save other user info as needed
 
         // Navigate to home screen

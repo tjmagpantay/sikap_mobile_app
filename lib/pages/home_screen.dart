@@ -530,12 +530,12 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 16),
               // Recent Jobs List
-                _isLoadingRecent
+              _isLoadingRecent
                   ? Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: LoadingScreen.recentJobSkeleton(),
                     )
-                  :  _recentJobs.isEmpty
+                  : _recentJobs.isEmpty
                   ? Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(

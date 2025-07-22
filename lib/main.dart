@@ -5,21 +5,14 @@ import 'package:sikap/pages/job_list_screen.dart';
 import 'package:sikap/pages/saved_jobs.dart';
 import 'package:sikap/pages/profile_screen.dart';
 import 'package:sikap/pages/login_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sikap/services/user_session.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Load session from SharedPreferences
-  final sessionLoaded = await UserSession.instance.loadSession();
-
-  runApp(MyApp(isLoggedIn: sessionLoaded));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
-  const MyApp({super.key, required this.isLoggedIn});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +20,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Sikap',
       theme: ThemeData(fontFamily: 'Inter'),
-      home: isLoggedIn ? const HomePage() : const LoginPage(),
+      home: const SplashScreen(), // Always start with SplashScreen
       routes: {
         '/home': (context) => const HomePage(),
         '/jobs': (context) => const JobList(),
