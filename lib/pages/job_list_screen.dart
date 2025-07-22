@@ -4,8 +4,8 @@ import 'package:sikap/utils/colors.dart';
 import 'package:sikap/widgets/navigation_helper.dart';
 import 'package:sikap/pages/job_detail_screen.dart';
 import 'package:sikap/services/api_service.dart';
-import 'package:sikap/services/user_session.dart'; 
-import 'package:sikap/utils/loading_screen.dart'; 
+import 'package:sikap/services/user_session.dart';
+import 'package:sikap/utils/loading_screen.dart';
 
 class JobList extends StatefulWidget {
   const JobList({super.key});
@@ -22,6 +22,7 @@ class _JobListState extends State<JobList> {
   String _selectedCategory = 'All';
   List<Map<String, dynamic>> _categories = []; // Store category objects
   bool _categoriesLoading = true;
+  Set<int> _savedJobIds = {}; // Track saved jobs
 
   @override
   void initState() {
@@ -129,36 +130,41 @@ class _JobListState extends State<JobList> {
     }
   }
 
-  Future<void> _loadJobPosts() async {
-    try {
-      final result = await ApiService.getJobPosts();
-      if (result['success'] && result['data'] != null) {
-        setState(() {
-          _jobPosts = result['data'];
-          _filteredJobPosts = _jobPosts;
-          _isLoading = false;
-        });
-        print('✅ Jobs loaded: ${_jobPosts.length}');
+Future<void> _loadJobPosts() async {
+  try {
+    final result = await ApiService.getJobPosts();
+    if (result['success'] && result['data'] != null) {
+      setState(() {
+        _jobPosts = result['data'];
+        _filteredJobPosts = _jobPosts;
+        _isLoading = false;
+      });
+      print('✅ Jobs loaded: ${_jobPosts.length}');
 
-        // Debug: Print ALL jobs to see their structure
-        for (int i = 0; i < _jobPosts.length; i++) {
-          final job = _jobPosts[i];
-          print(
-            '📋 Job $i: ${job['job_title']} - job_category_id: ${job['job_category_id']}',
-          );
-          print('📋 Full job $i structure: $job');
+      // Load saved jobs and update _savedJobIds
+      final userSession = UserSession.instance;
+      final jobseekerId = userSession.jobseekerId;
+      if (jobseekerId != null) {
+        final savedResult = await ApiService.getSavedJobs(jobseekerId);
+        if (savedResult['success'] && savedResult['data'] != null) {
+          setState(() {
+            _savedJobIds = savedResult['data']
+                .map<int>((savedJob) => savedJob['job']['job_id'] as int)
+                .toSet();
+          });
         }
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
       }
-    } catch (e) {
+    } else {
       setState(() {
         _isLoading = false;
       });
     }
+  } catch (e) {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -376,13 +382,15 @@ class _JobListState extends State<JobList> {
     required BuildContext context,
     required Map<String, dynamic> job,
   }) {
+    final jobId = job['job_id'];
+    final isSaved = _savedJobIds.contains(jobId);
+
     return GestureDetector(
       onTap: () {
-        // Navigate to job detail screen with job ID
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => JobDetailScreen(jobId: job['job_id']),
+            builder: (context) => JobDetailScreen(jobId: jobId),
           ),
         );
       },
@@ -466,15 +474,27 @@ class _JobListState extends State<JobList> {
                     final jobseekerId = userSession.jobseekerId;
 
                     if (jobseekerId != null) {
-                      final result = await ApiService.saveJob(
-                        jobseekerId,
-                        job['job_id'],
-                      );
+                      final result = isSaved
+                          ? await ApiService.unsaveJob(jobseekerId, jobId)
+                          : await ApiService.saveJob(jobseekerId, jobId);
+
                       if (result['success']) {
+                        setState(() {
+                          if (isSaved) {
+                            _savedJobIds.remove(jobId);
+                          } else {
+                            _savedJobIds.add(jobId);
+                          }
+                        });
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Job saved successfully!')),
+                          SnackBar(
+                            content: Text(
+                              isSaved
+                                  ? 'Job removed from saved!'
+                                  : 'Job saved successfully!',
+                            ),
+                          ),
                         );
-                        // Optionally refresh the job list or update the icon
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -487,8 +507,7 @@ class _JobListState extends State<JobList> {
                     }
                   },
                   child: Icon(
-                    Icons
-                        .bookmark_border, // This will become Icons.bookmark when saved
+                    isSaved ? Icons.bookmark : Icons.bookmark_border,
                     size: 24,
                     color: AppColors.secondary,
                   ),

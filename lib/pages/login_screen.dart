@@ -6,6 +6,7 @@ import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 import 'package:sikap/pages/register_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -56,6 +57,13 @@ class _LoginPageState extends State<LoginPage> {
         // Store user data in session
         UserSession.instance.setUserData(result['user'], result['token']);
 
+        // Save login state and user ID in shared preferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('userId', result['user']['id'].toString());
+        await prefs.setString('token', result['token']); // If you use a token
+        // Save other user info as needed
+
         // Navigate to home screen
         Navigator.pushReplacement(
           context,
@@ -80,17 +88,21 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-void _openForgotPassword() async {
-  final url = 'http://192.168.1.8/sikap/public/index.php?page=forgot-password';
-  final uri = Uri.parse(url);
-  try {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Could not open link: $e'), backgroundColor: Colors.red),
-    );
+  void _openForgotPassword() async {
+    final url =
+        'http://192.168.1.8/sikap/public/index.php?page=forgot-password';
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open link: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {

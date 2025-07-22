@@ -3,6 +3,7 @@ import 'package:sikap/utils/colors.dart';
 import 'package:sikap/services/api_service.dart';
 import 'package:sikap/services/user_session.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart';
 
 class JobDetailScreen extends StatefulWidget {
   final int jobId;
@@ -95,6 +96,7 @@ class _JobDetailScreenState extends State<JobDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+
     if (_isLoading) {
       return Scaffold(
         backgroundColor: Colors.white,
@@ -168,26 +170,26 @@ class _JobDetailScreenState extends State<JobDetailScreen>
                   ),
 
                   // Back button and bookmark
-                      Positioned(
-                        top: 16,
-                        left: 16,
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 24,
                         ),
                       ),
+                    ),
+                  ),
 
                   Positioned(
                     top: 16,
@@ -225,18 +227,29 @@ class _JobDetailScreenState extends State<JobDetailScreen>
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Center(
-                            child: Text(
-                              (_jobDetails?['employer']?['company_name'] ??
-                                      'C')[0]
-                                  .toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
+                          child: _getBusinessLogoUrl().isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    _getBusinessLogoUrl(),
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Icon(Icons.business),
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    (_jobDetails?['employer']?['company_name'] ??
+                                            'C')[0]
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
                         ),
 
                         const SizedBox(width: 16),
@@ -637,6 +650,18 @@ class _JobDetailScreenState extends State<JobDetailScreen>
     } catch (e) {
       return dateString;
     }
+  }
+
+  String _getBusinessLogoUrl() {
+    final url = _jobDetails?['company']?['business_logo_url'];
+    if (url != null && url.isNotEmpty) {
+      return url;
+    }
+    final logoPath = _jobDetails?['company']?['business_logo'];
+    if (logoPath != null && logoPath.isNotEmpty) {
+      return 'http://192.168.1.8/sikap/public/' + logoPath;
+    }
+    return '';
   }
 
   @override

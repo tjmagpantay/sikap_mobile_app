@@ -201,4 +201,13 @@ class UserSession {
 
   // Get current token
   String? get token => _token;
+
+  String? _prefsUserId;
+  // Add method to load userId and token from SharedPreferences
+  Future<void> loadFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    _prefsUserId = prefs.getString('userId');
+    _token = prefs.getString('token');
+    // Load other info as needed
+  }
 }

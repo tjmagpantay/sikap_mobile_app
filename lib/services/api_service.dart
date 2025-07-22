@@ -317,6 +317,6 @@ class ApiService {
   static String getImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) return '';
     if (imagePath.startsWith('http')) return imagePath;
-    return 'http://192.168.1.8/sikap_api/$imagePath';
+    return 'http://192.168.1.8/sikap/$imagePath';
   }
 }

@@ -110,6 +110,12 @@ class _ProfileState extends State<Profile> {
   }
 
   String _getProfileImageUrl() {
+    // Use the full URL from the API response if available
+    final url = _userProfile?['profile']?['profile_picture_url'];
+    if (url != null && url.isNotEmpty) {
+      return url;
+    }
+    // Fallback to your old logic if needed
     final imagePath = _userProfile?['profile']?['profile_picture'];
     return ApiService.getImageUrl(imagePath);
   }
@@ -142,43 +148,12 @@ class _ProfileState extends State<Profile> {
   }
 
   double _getProfileCompletion() {
-    final completion = _userProfile?['profile']?['profile_completion'];
-    if (completion == 1) return 1.0;
-
-    // Calculate completion based on available data
-    int filledFields = 0;
-    int totalFields = 8;
-
-    final profile = _userProfile?['profile'];
-    if (profile != null) {
-      if (profile['first_name'] != null &&
-          profile['first_name'].isNotEmpty &&
-          profile['first_name'] != 'N/A')
-        filledFields++;
-      if (profile['last_name'] != null &&
-          profile['last_name'].isNotEmpty &&
-          profile['last_name'] != 'N/A')
-        filledFields++;
-      if (profile['date_of_birth'] != null &&
-          profile['date_of_birth'].isNotEmpty)
-        filledFields++;
-      if (profile['sex'] != null && profile['sex'].isNotEmpty) filledFields++;
-      if (profile['address'] != null &&
-          profile['address'].isNotEmpty &&
-          profile['address'] != 'N/A')
-        filledFields++;
-      if (profile['contact_no'] != null &&
-          profile['contact_no'].isNotEmpty &&
-          profile['contact_no'] != 'N/A')
-        filledFields++;
-      if (profile['profile_picture'] != null &&
-          profile['profile_picture'].isNotEmpty)
-        filledFields++;
-      if (_userProfile?['email'] != null && _userProfile!['email'].isNotEmpty)
-        filledFields++;
+    final score = _userProfile?['profile']?['profile_completion_score'];
+    if (score != null) {
+      // The backend returns 0-100, so convert to 0.0-1.0 for the progress bar
+      return (score is int ? score.toDouble() : score) / 100.0;
     }
-
-    return filledFields / totalFields;
+    return 0.0;
   }
 
 
